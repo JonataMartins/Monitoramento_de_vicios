@@ -1,0 +1,24 @@
+body {
+  font-family: Arial, sans-serif;
+  background: #f4f4f4;
+  text-align: center;
+}
+
+h1 {
+  margin-top: 20px;
+}
+
+#auth-section, #main-section {
+  background: #fff;
+  max-width: 400px;
+  margin: 20px auto;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+input, button {
+  margin: 8px;
+  padding: 10px;
+  width: 80%;
+}

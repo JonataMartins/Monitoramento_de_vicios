@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Monitoramento de Vícios</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>Monitoramento de Vícios</h1>
+
+  <div id="auth-section">
+    <h2>Login</h2>
+    <input type="text" id="username" placeholder="Usuário">
+    <input type="password" id="password" placeholder="Senha">
+    <button onclick="login()">Entrar</button>
+    <p id="auth-msg"></p>
+  </div>
+
+  <div id="main-section" style="display:none;">
+    <h2>Bem-vindo, <span id="user-display"></span></h2>
+
+    <div id="add-habit">
+      <input type="text" id="habit-name" placeholder="Digite seu hábito/vício">
+      <button onclick="addHabit()">Adicionar</button>
+    </div>
+
+    <div id="habit-list"></div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
