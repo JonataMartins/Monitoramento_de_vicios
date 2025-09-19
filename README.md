@@ -24,6 +24,20 @@ Duckdns configuração
         */5 * * * * ~/.duckdns.sh >/dev/null 2>&1
 
 ngrok configuração
+    funcionamento 
+        Inicialização: O cliente Ngrok se conecta aos servidores usando TLS
+        Alocação: O servidor aloca um endereço público único
+        Tunneling: Todo tráfego HTTP/HTTPS é encaminhado através do túnel
+        Resposta: As respostas da aplicação local retornam pelo mesmo túnel
+
+    limitações do plano gratuito
+        1 domínio estático
+        1 endpoint ativo
+        1 GB de transferência mensal
+        20.000 requisições HTTP/mês
+        5.000 conexões TCP/TLS/mês
+        Página de aviso antes de acessar o conteúdo
+
     instalação
         curl -sSL https://ngrok-agent.s3.amazonaws.com/ngrok.asc \
         | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null \
@@ -36,4 +50,17 @@ ngrok configuração
         ngrok config add-authtoken <token>
 
     Start an endpoint:
-        ngrok http http://localhost:80
+        ngrok http http://localhost:8000
+
+    Start witch password
+        ngrok http -auth="username:password" http://localhost:8000
+
+localtunnel configuração
+    Install
+        npm install -g localtunnel 
+
+    Start Server
+        python -m http.server 8000
+
+    Expose to Internet
+        lt --port 8000
