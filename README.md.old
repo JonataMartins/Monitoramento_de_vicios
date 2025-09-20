@@ -1,11 +1,27 @@
 # Monitoramento_de_vicios
 Projeto para SD
 
-iniciar servidor 
-    cd /opt/lampp
-    sudo ./lampp start
-    cd /opt/lampp/htdocs/Monitoramento_de_vicios/server
-    node index.js
+Duckdns configuração
+    nano ~/.duckdns.sh
+        #!/bin/bash
+
+        # === CONFIGURAÇÃO ===
+        TOKEN="SEU_TOKEN_AQUI"
+        DOMAIN="pixel-xadrez"
+
+        # === ATUALIZAÇÃO ===
+        echo url="https://www.duckdns.org/update?domains=$DOMAIN&token=$TOKEN&ip=" | curl -k -o ~/.duckdns.log -K -
+
+        # Log opcional
+        echo "$(date) - DuckDNS atualizado" >> ~/.duckdns.log
+
+    chmod +x ~/.duckdns.sh
+
+    ~/.duckdns.sh
+    cat ~/.duckdns.log
+
+    crontab -e
+        */5 * * * * ~/.duckdns.sh >/dev/null 2>&1
 
 ngrok configuração
     funcionamento 
@@ -38,3 +54,13 @@ ngrok configuração
 
     Start witch password
         ngrok http -auth="username:password" http://localhost:8000
+
+localtunnel configuração
+    Install
+        npm install -g localtunnel 
+
+    Start Server
+        python -m http.server 8000
+
+    Expose to Internet
+        lt --port 8000
