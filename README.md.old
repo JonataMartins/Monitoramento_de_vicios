@@ -50,17 +50,17 @@ ngrok configuração
         ngrok config add-authtoken <token>
 
     Start an endpoint:
-        ngrok http http://localhost:8000
+        ngrok http http://localhost:3000
 
     Start witch password
-        ngrok http -auth="username:password" http://localhost:8000
+        ngrok http -auth="username:password" http://localhost:3000
 
 localtunnel configuração
     Install
         npm install -g localtunnel 
 
     Start Server
-        python -m http.server 8000
+        python -m http.server 3000
 
     Expose to Internet
-        lt --port 8000
+        lt --port 3000

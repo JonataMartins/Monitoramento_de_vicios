@@ -1,6 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const crypto = require('crypto');  // Importando o módulo 'crypto' do Node.js
+const path = require('path'); 
 
 // **Configuração do MongoDB Atlas**
 const uri = "mongodb+srv://davimartins_db_user:OTkNrXDSntQiWsea@cluster-monitoramento-v.kfyepcc.mongodb.net/monitoramento_vicios?retryWrites=true&w=majority";
@@ -17,6 +18,7 @@ mongoose.connect(uri)
 // **Definindo o app**
 const app = express();
 app.use(express.json());  // Para fazer o parse do corpo das requisições JSON
+app.use(express.static(path.join(__dirname,'..', 'public'))); // Configurar para servir arquivos estáticos
 
 // **Criação do Schema e Model para o Usuário usando Mongoose**
 const usuarioSchema = new mongoose.Schema({
@@ -171,9 +173,10 @@ app.get('/habitos/:usuario_id', async (req, res) => {
   }
 });
 
-// **Rota para a página inicial (opcional)**
+// **Rota para a página inicial**
 app.get('/', (req, res) => {
-  res.send('Bem-vindo ao servidor de monitoramento de vícios!');
+  console.log("Rota / acessada");
+  res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
 });
 
 // **Iniciar o servidor Express**

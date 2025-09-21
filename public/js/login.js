@@ -14,6 +14,10 @@ document.getElementById("loginForm").addEventListener("submit", async function (
   });
 
   const result = await response.json();
+  
+  // Adicionar um console.log para verificar a resposta do servidor
+  console.log(result); // Exibe a resposta completa para ajudar no debug
+  
   if (response.ok) {
     alert(result.message);
     window.location.href = 'habitos.html';  // Redireciona para a página de hábitos

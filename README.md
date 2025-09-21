@@ -34,7 +34,7 @@ ngrok configuração
         ngrok config add-authtoken <token>
 
     Start an endpoint:
-        ngrok http http://localhost:8000
+        ngrok http http://localhost:3000
 
     Start witch password
-        ngrok http -auth="username:password" http://localhost:8000
+        ngrok http -auth="username:password" http://localhost:3000

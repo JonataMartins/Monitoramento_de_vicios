@@ -18,13 +18,13 @@ document.getElementById("createAccountForm").addEventListener("submit", async fu
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ nome_usuario, senha, confirmar_senha }),  // Incluir 'confirmar_senha' aqui
+    body: JSON.stringify({ nome_usuario, senha, confirmar_senha }),
   });
 
   const result = await response.json();
   if (response.ok) {
     alert(result.message);
-    window.location.href = 'index.html';  // Redireciona para o login
+    window.location.href = 'index.html';
   } else {
     alert(result.message);
   }
