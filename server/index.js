@@ -1,7 +1,8 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const crypto = require('crypto');  // Importando o módulo 'crypto' do Node.js
-const path = require('path'); 
+const path = require('path');
+const cors = require('cors'); // Importando o CORS
 
 // **Configuração do MongoDB Atlas**
 const uri = "mongodb+srv://davimartins_db_user:OTkNrXDSntQiWsea@cluster-monitoramento-v.kfyepcc.mongodb.net/monitoramento_vicios?retryWrites=true&w=majority";
@@ -17,8 +18,18 @@ mongoose.connect(uri)
 
 // **Definindo o app**
 const app = express();
+
+// **Configuração do CORS**
+const corsOptions = {
+  origin: '*',  // Permitir qualquer origem (ideal para ngrok ou outros domínios)
+  methods: ['GET', 'POST'],  // Permitir métodos GET e POST
+  allowedHeaders: ['Content-Type'], // Permitir apenas cabeçalhos de conteúdo
+};
+
+app.use(cors(corsOptions));  // Usando o CORS
+
 app.use(express.json());  // Para fazer o parse do corpo das requisições JSON
-app.use(express.static(path.join(__dirname,'..', 'public'))); // Configurar para servir arquivos estáticos
+app.use(express.static(path.join(__dirname, '..', 'public'))); // Configurar para servir arquivos estáticos
 
 // **Criação do Schema e Model para o Usuário usando Mongoose**
 const usuarioSchema = new mongoose.Schema({
@@ -183,4 +194,4 @@ app.get('/', (req, res) => {
 const PORT = 3000;
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
-});
+}); 

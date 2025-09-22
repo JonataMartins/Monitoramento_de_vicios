@@ -7,7 +7,7 @@ async function carregarHabitos() {
     const habitosList = document.getElementById('habitosList');
     habitos.forEach(habito => {
       const li = document.createElement('li');
-      li.textContent = habito.nome;  // Ajuste conforme o que você quiser exibir
+      li.textContent = habito.nome;
       habitosList.appendChild(li);
     });
   } catch (erro) {
