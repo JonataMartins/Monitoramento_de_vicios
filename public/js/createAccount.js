@@ -6,13 +6,11 @@ document.getElementById("createAccountForm").addEventListener("submit", async fu
   const senha = document.getElementById("senha").value;
   const confirmar_senha = document.getElementById("confirmar_senha").value;
 
-  // Verificar se as senhas coincidem
   if (senha !== confirmar_senha) {
     alert('As senhas não coincidem.');
     return;
   }
 
-  // Enviar a requisição com todos os dados necessários (incluindo 'confirmar_senha')
   const response = await fetch('http://localhost:3000/usuarios', {
     method: 'POST',
     headers: {

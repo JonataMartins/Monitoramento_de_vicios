@@ -1,8 +1,8 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const crypto = require('crypto');  // Importando o módulo 'crypto' do Node.js
+const crypto = require('crypto');
 const path = require('path');
-const cors = require('cors'); // Importando o CORS
+const cors = require('cors');
 
 // **Configuração do MongoDB Atlas**
 const uri = "mongodb+srv://davimartins_db_user:OTkNrXDSntQiWsea@cluster-monitoramento-v.kfyepcc.mongodb.net/monitoramento_vicios?retryWrites=true&w=majority";
@@ -21,22 +21,22 @@ const app = express();
 
 // **Configuração do CORS**
 const corsOptions = {
-  origin: '*',  // Permitir qualquer origem (ideal para ngrok ou outros domínios)
+  origin: '*',  // Permitir qualquer origem 
+  //origin: 'https://cb92bc91c4ec.ngrok-free.app', // Permite apenas um aorigem especifica
   methods: ['GET', 'POST'],  // Permitir métodos GET e POST
   allowedHeaders: ['Content-Type'], // Permitir apenas cabeçalhos de conteúdo
 };
 
-app.use(cors(corsOptions));  // Usando o CORS
-
-app.use(express.json());  // Para fazer o parse do corpo das requisições JSON
-app.use(express.static(path.join(__dirname, '..', 'public'))); // Configurar para servir arquivos estáticos
+app.use(cors(corsOptions));  
+app.use(express.json());  
+app.use(express.static(path.join(__dirname, '..', 'public')));
 
 // **Criação do Schema e Model para o Usuário usando Mongoose**
 const usuarioSchema = new mongoose.Schema({
   nome_usuario: {
     type: String,
     required: true,
-    unique: true,  // Garantir que o nome de usuário seja único
+    unique: true,
   },
   senha: {
     type: String,
@@ -44,13 +44,13 @@ const usuarioSchema = new mongoose.Schema({
   }
 });
 
-const Usuario = mongoose.model('Usuario', usuarioSchema);  // Criação do modelo de Usuário
+const Usuario = mongoose.model('Usuario', usuarioSchema);
 
 // **Criação do Schema e Model para os Hábitos**
 const habitoSchema = new mongoose.Schema({
   usuario_id: {
-    type: mongoose.Schema.Types.ObjectId,  // Referência ao id do usuário
-    ref: 'Usuario',  // Relaciona o hábito a um usuário
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'Usuario', 
     required: true,
   },
   nome_habito: {
@@ -71,13 +71,13 @@ const habitoSchema = new mongoose.Schema({
   }
 });
 
-const Habito = mongoose.model('Habito', habitoSchema);  // Criação do modelo de Hábito
+const Habito = mongoose.model('Habito', habitoSchema);
 
 // **Função para criptografar a senha**
 function hashSenha(senha) {
-  const hash = crypto.createHash('sha256'); // Algoritmo de hash (sha256 é um bom padrão)
-  hash.update(senha);  // Adiciona a senha ao hash
-  return hash.digest('hex');  // Retorna o hash em formato hexadecimal
+  const hash = crypto.createHash('sha256');
+  hash.update(senha);
+  return hash.digest('hex'); 
 }
 
 // **Rota para criar um usuário**
@@ -103,7 +103,7 @@ app.post('/usuarios', async (req, res) => {
     // Criar um novo usuário com a senha criptografada
     const novoUsuario = new Usuario({
       nome_usuario,
-      senha: senhaCriptografada,  // Armazenar a senha criptografada
+      senha: senhaCriptografada,
     });
 
     // Inserir no MongoDB
