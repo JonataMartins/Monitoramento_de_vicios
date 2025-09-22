@@ -1,25 +1,24 @@
 const express = require('express');
 const path = require('path');
-const connectDB = require('./config/database');
 const cors = require('cors');
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
-const usuarioRoutes = require('./routes/usuario');
-const habitoRoutes = require('./routes/habito');
+const connectDB = require('./public/backend/config/database');
+const usuarioRoutes = require('./public/backend/routes/usuario');
+const habitoRoutes = require('./public/backend/routes/habito');
+
+require('dotenv').config();
+
+const app = express();
 
 // Conectar ao MongoDB
 connectDB();
 
-const app = express();
-
-// Configuração do CORS
 app.use(cors());
 app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public/frontend')));
 
-// Serve arquivos estáticos (css, js, imagens)
-app.use(express.static(path.join(__dirname, 'public')));
-
-// Swagger para gerar automaticamente a documentação
+// Swagger
 const swaggerOptions = {
   definition: {
     openapi: '3.0.0',
@@ -31,23 +30,13 @@ const swaggerOptions = {
   },
   apis: ['./routes/usuario.js', './routes/habito.js'],
 };
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerJsdoc(swaggerOptions)));
 
-const swaggerSpec = swaggerJsdoc(swaggerOptions);
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-
-// Usando a rota consolidada para o usuário
+// Rotas
 app.use('/usuario', usuarioRoutes);
-
-// Usando a rota de criação de hábitos
 app.use('/habito', habitoRoutes);
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
-// Rota para a página inicial
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-// Iniciar o servidor
-const PORT = 3000;
-app.listen(PORT, () => {
-  console.log(`Servidor rodando na porta ${PORT}`);
-});
+// Iniciar servidor
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));

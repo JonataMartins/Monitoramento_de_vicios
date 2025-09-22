@@ -1,22 +1,20 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login</title>
-  <link rel="stylesheet" href="/css/style.css">
+  <title>Redirecionando para Login</title>
+  <script>
+    window.onload = function() {
+      window.location.href = '/pages/login.html';
+    };
+  </script>
+  <!-- Fallback para quem tiver JS desabilitado -->
+  <noscript>
+    <meta http-equiv="refresh" content="0;url=/pages/login.html">
+  </noscript>
 </head>
 <body>
-
-  <h2>Login</h2>
-  <form id="loginForm">
-    <input type="text" id="nome_usuario" placeholder="Nome de usuário" required />
-    <input type="password" id="senha" placeholder="Senha" required />
-    <button type="submit">Entrar</button>
-  </form>
-
-  <p>Não tem conta? <a href="createAccount.html">Criar Conta</a></p>
-
-  <script src="/js/login.js"></script>
+  <p>Redirecionando para a página de login...</p>
 </body>
 </html>

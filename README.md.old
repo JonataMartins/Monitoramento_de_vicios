@@ -69,4 +69,4 @@ iniciar servidor
     cd /opt/lampp
     sudo ./lampp start
     cd /opt/lampp/htdocs/Monitoramento_de_vicios/server
-    node index.js
+    node server.js

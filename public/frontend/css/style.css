@@ -1,0 +1,112 @@
+/* /public/css/style.css */
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f4f4f4;
+  margin: 0;
+  padding: 20px;
+}
+
+h2 {
+  color: #333;
+}
+
+form {
+  background: white;
+  padding: 20px;
+  border-radius: 5px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+input {
+  width: 100%;
+  padding: 10px;
+  margin: 10px 0;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+button {
+  width: 100%;
+  padding: 10px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #45a049;
+}
+
+a {
+  color: #333;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+.profile {
+  position: relative;
+  cursor: pointer;
+}
+
+.profile img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid white;
+}
+
+.dropdown {
+  display: none;
+  position: absolute;
+  top: 50px;
+  right: 0;
+  background-color: white;
+  color: #333;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  border-radius: 5px;
+  overflow: hidden;
+  min-width: 150px;
+  z-index: 10;
+}
+
+.dropdown.active {
+  display: block;
+}
+
+.dropdown div {
+  padding: 10px 15px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+}
+
+.dropdown div:last-child {
+  border-bottom: none;
+}
+
+.dropdown div:hover {
+  background-color: #f0f0f0;
+}
+
+main {
+  padding: 20px;
+}
+
+#habitosList {
+  list-style: none;
+  padding: 0;
+}
+
+#habitosList li {
+  background-color: white;
+  margin-bottom: 10px;
+  padding: 15px;
+  border-radius: 5px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
