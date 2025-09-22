@@ -29,7 +29,7 @@ const swaggerOptions = {
       description: 'Documentação da API para monitoramento de vícios',
     },
   },
-  apis: ['./routes/*.js'],
+  apis: ['./routes/usuario.js', './routes/habito.js'],
 };
 
 const swaggerSpec = swaggerJsdoc(swaggerOptions);

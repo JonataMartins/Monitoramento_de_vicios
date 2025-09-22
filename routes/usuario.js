@@ -13,7 +13,7 @@ function hashSenha(senha) {
 // **Rota para Criar Usuário**
 /**
  * @swagger
- * /create:
+ * /usuario/create:
  *   post:
  *     summary: Cria um novo usuário
  *     description: Cria um novo usuário com nome de usuário e senha criptografada
@@ -67,7 +67,7 @@ router.post('/create', async (req, res) => {
 // **Rota de Login**
 /**
  * @swagger
- * /login:
+ * /usuario/login:
  *   post:
  *     summary: Realiza o login de um usuário
  *     description: Verifica se o usuário existe e valida a senha
@@ -183,7 +183,7 @@ router.put('/trocarSenha', async (req, res) => {
 // **Rota para Excluir Usuário**
 /**
  * @swagger
- * /delete:
+ * /usuario/delete:
  *   delete:
  *     summary: Exclui um usuário
  *     description: Exclui um usuário do sistema

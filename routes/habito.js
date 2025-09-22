@@ -5,7 +5,7 @@ const router = express.Router();
 
 /**
  * @swagger
- * /create:
+ * /habito/create:
  *   post:
  *     summary: Cria um novo hábito
  *     description: Associa um hábito a um usuário
