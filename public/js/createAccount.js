@@ -11,7 +11,7 @@ document.getElementById("createAccountForm").addEventListener("submit", async fu
     return;
   }
 
-  const response = await fetch('http://localhost:3000/usuarios', {
+  const response = await fetch('http://localhost:3000/usuario/create', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

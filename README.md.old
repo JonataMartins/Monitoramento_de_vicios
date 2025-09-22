@@ -64,3 +64,9 @@ localtunnel configuração
 
     Expose to Internet
         lt --port 3000
+
+iniciar servidor 
+    cd /opt/lampp
+    sudo ./lampp start
+    cd /opt/lampp/htdocs/Monitoramento_de_vicios/server
+    node index.js
