@@ -4,6 +4,8 @@
     "express": "^5.1.0",
     "kafka-node": "^5.0.0",
     "mongodb": "^6.20.0",
-    "mongoose": "^8.18.1"
+    "mongoose": "^8.18.1",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1"
   }
 }
