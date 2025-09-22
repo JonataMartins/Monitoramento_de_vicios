@@ -28,7 +28,7 @@ const swaggerOptions = {
       description: 'Documentação da API para monitoramento de vícios',
     },
   },
-  apis: ['./routes/usuario.js', './routes/habito.js'],
+  apis: ['./public/backend/routes/usuario.js', './public/backend/routes/habito.js'],
 };
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerJsdoc(swaggerOptions)));
 
