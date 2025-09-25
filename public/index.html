@@ -178,13 +178,13 @@
   <script>
     // Aguarda 2 segundos antes do redirecionamento
     setTimeout(function() {
-      window.location.href = './frontend/pages/login.html';
+      window.location.href = '/pages/login.html';
     }, 5000);
     
     // Fallback para garantir o redirecionamento mesmo se houver problemas
     setTimeout(function() {
       if (window.location.href.indexOf('login.html') === -1) {
-        window.location.href = './frontend/pages/login.html';
+        window.location.href = '/pages/login.html';
       }
     }, 5000);
   </script>
