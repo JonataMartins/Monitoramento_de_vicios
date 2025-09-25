@@ -1,0 +1,10 @@
+# Ignorar arquivos temporários
+*.log
+*.tmp
+
+# Ignorar os modulos do node
+/node_modules
+package-lock.json
+
+# Ignora o arquivo de .env
+.env
