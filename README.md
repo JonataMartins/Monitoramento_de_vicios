@@ -44,11 +44,11 @@ Este é um projeto desenvolvido com **Node.js**, utilizando **Express**, **Mongo
 
 ## Documentação da API
 
-A documentação da API pode ser acessada localmente através do seguinte link:
+A documentação da API, feita Swagger, com pode ser acessada através da rota /api-doc, ou do link local:
 
 [http://localhost:3000/api-doc](http://localhost:3000/api-doc)
 
-## Ngrok
+## Ngrok, mais informações
 
 ### Funcionamento do Ngrok
 
@@ -72,7 +72,7 @@ O plano gratuito do **Ngrok** tem algumas limitações que você deve estar cien
 
 Para instalar o **Ngrok** no seu sistema, use os seguintes comandos para distribuições **baseadas no Debian (Ubuntu, etc.)**:
 
-```bbbb
+```bash
 curl -sSL https://ngrok-agent.s3.amazonaws.com/ngrok.asc \
 | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null \
 && echo "deb https://ngrok-agent.s3.amazonaws.com bookworm main" \
