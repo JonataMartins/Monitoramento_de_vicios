@@ -3,20 +3,44 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Criar Conta</title>
+  <title>Criar Conta - HabitFlow</title>
   <link rel="stylesheet" href="../css/style.css">
 </head>
 <body>
-
-  <h2>Criar Conta</h2>
-  <form id="createAccountForm">
-    <input type="text" id="nome_usuario" placeholder="Nome de usuário" required />
-    <input type="password" id="senha" placeholder="Senha" required />
-    <input type="password" id="confirmar_senha" placeholder="Confirmar senha" required />
-    <button type="submit">Criar Conta</button>
-  </form>
-
-  <p>Já tem uma conta? <a href="/index.html">Login</a></p>
+  <div class="container">
+    <div class="header">
+      <h1>Junte-se a nós</h1>
+      <p>Crie sua conta e comece sua jornada</p>
+    </div>
+    
+    <div class="form-container">
+      <form id="createAccountForm">
+        <div class="input-group">
+          <label for="nome_usuario">Nome de usuário</label>
+          <input type="text" id="nome_usuario" placeholder="Escolha um nome de usuário" required>
+        </div>
+        
+        <div class="input-group">
+          <label for="senha">Senha</label>
+          <input type="password" id="senha" placeholder="Crie uma senha segura" required>
+        </div>
+        
+        <div class="input-group">
+          <label for="confirmar_senha">Confirmar senha</label>
+          <input type="password" id="confirmar_senha" placeholder="Repita sua senha" required>
+        </div>
+        
+        <button type="submit" class="btn" id="submitBtn">
+          <span class="loading"></span>
+          Criar Conta
+        </button>
+      </form>
+      
+      <div class="link">
+        <p>Já tem uma conta? <a href="login.html">Faça login</a></p>
+      </div>
+    </div>
+  </div>
 
   <script src="../js/createAccount.js"></script>
 </body>
