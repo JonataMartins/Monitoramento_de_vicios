@@ -3,27 +3,36 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Meus Hábitos</title>
+  <title>Meus Hábitos - HabitFlow</title>
   <link rel="stylesheet" href="../css/style.css">
 </head>
 <body>
-
-<header>
-  <h2>Meus Hábitos</h2>
-  <div class="profile" id="profileMenu">
-    <img src="https://via.placeholder.com/40" alt="Perfil">
-    <div class="dropdown" id="dropdownMenu">
-      <div id="username"></div>
-      <div id="settings">Configurações</div>
-      <div id="logout">Sair</div>
+  <div class="container" style="max-width: 600px;">
+    <div class="habits-header">
+      <h1>Meus Hábitos</h1>
+      <div class="profile-menu">
+        <img src="https://via.placeholder.com/40/4361ee/ffffff?text=U" alt="Perfil" class="profile-img" id="profileImg">
+        <div class="dropdown-menu" id="dropdownMenu">
+          <div class="dropdown-item" id="username">Usuário</div>
+          <div class="dropdown-item" id="settings">Configurações</div>
+          <div class="dropdown-item" id="logout">Sair</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="habits-container">
+      <ul id="habitosList">
+        <!-- Os hábitos serão carregados aqui via JavaScript -->
+      </ul>
+      
+      <div class="empty-state" id="emptyState" style="display: none;">
+        <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2364748b'><path d='M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z'/></svg>" alt="Nenhum hábito">
+        <h3>Nenhum hábito cadastrado</h3>
+        <p>Comece adicionando seu primeiro hábito!</p>
+      </div>
     </div>
   </div>
-</header>
 
-<main>
-  <ul id="habitosList"></ul>
-</main>
-
-<script src="../js/habitos.js"></script>
+  <script src="../js/habitos.js"></script>
 </body>
 </html>
