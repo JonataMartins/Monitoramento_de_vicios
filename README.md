@@ -29,8 +29,9 @@ Este é um projeto desenvolvido com **Node.js**, utilizando **Express**, **Mongo
    Crie um arquivo `.env` na raiz do projeto e adicione as variáveis de ambiente necessárias:
    ```bash
    MONGO_URI=mongodb+srv://<usuario>:<senha>@cluster.mongodb.net/<nome-do-banco>
-   JWT_SECRET=seu-segredo-jwt
+   API_URL=http://localhost:3000
    PORT=3000
+   JWT_SECRET=seu-segredo-jwt
 
 4. **Inicie o servidor localmente**:
    Para iniciar o servidor, use o comando:
