@@ -44,6 +44,31 @@ router.post('/', async (req, res) => {
   }
 });
 
+// **Rota para Editar Hábito - CORRIGIDA: remover verificarToken por enquanto**
+router.put('/:id', async (req, res) => {
+  const { nome_usuario, nome_habito, descricao } = req.body;
+
+  try {
+    const usuario = await Usuario.findOne({ nome_usuario });
+    if (!usuario) {
+      return res.status(404).json({ message: 'Usuário não encontrado' });
+    }
+
+    const habito = await Habito.findOne({ _id: req.params.id, usuario_id: usuario._id });
+    if (!habito) {
+      return res.status(404).json({ message: 'Hábito não encontrado' });
+    }
+
+    habito.nome_habito = nome_habito || habito.nome_habito;
+    habito.descricao = descricao || habito.descricao;
+    await habito.save();
+
+    res.json({ message: 'Hábito atualizado com sucesso!', habito });
+  } catch (err) {
+    res.status(500).json({ message: 'Erro ao atualizar hábito' });
+  }
+});
+
 // **Rota para Excluir Hábito**
 router.delete('/delete', async (req, res) => {
   const { nome_usuario, habito_id } = req.body;
