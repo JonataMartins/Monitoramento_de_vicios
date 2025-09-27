@@ -18,6 +18,11 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public/frontend')));
 
+app.get('/api/config', (req, res) => {
+  res.json({ apiUrl: process.env.API_URL });
+});
+
+
 // Swagger
 const swaggerOptions = {
   definition: {

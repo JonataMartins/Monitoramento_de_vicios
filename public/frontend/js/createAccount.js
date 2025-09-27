@@ -1,4 +1,3 @@
-// Função para criar conta
 document.getElementById("createAccountForm").addEventListener("submit", async function (e) {
   e.preventDefault();
 
@@ -12,7 +11,13 @@ document.getElementById("createAccountForm").addEventListener("submit", async fu
   }
 
   try {
-    const response = await fetch('${process.env.API_URL}/usuario/create', {
+    // Pega a URL da API
+    const configResponse = await fetch('/api/config');
+    const config = await configResponse.json();
+    const API_URL = config.apiUrl; // Aqui você pega a URL da API
+
+    // Agora, faz a requisição para a criação da conta
+    const response = await fetch(API_URL + '/usuario/create', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

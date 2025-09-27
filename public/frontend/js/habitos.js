@@ -1,3 +1,25 @@
+let API_URL = ''; // Variável global para armazenar a URL da API
+
+// Função para carregar a configuração da API
+async function carregarAPIConfig() {
+  try {
+    // Busca a configuração da URL da API
+    const configResponse = await fetch('/api/config');
+    const config = await configResponse.json();
+    API_URL = config.apiUrl;
+
+    // Agora que a API_URL está carregada, podemos chamar as outras funções
+    await carregarHabitos();  // Essa função depende da URL da API
+    setupPerfil();
+    setupCardsHabitos();
+    setupModais();
+    
+  } catch (erro) {
+    console.error('Erro ao carregar a configuração da API:', erro);
+    alert('Não foi possível carregar a configuração da API. Tente novamente mais tarde.');
+  }
+}
+
 // Verifica login com JWT - MODIFICADO: Adicionar fallback
 async function checarLogin() {
   const token = localStorage.getItem('authToken');
@@ -12,7 +34,7 @@ async function checarLogin() {
   // Se tem token, verificar se é válido
   if (token) {
     try {
-      const response = await fetch('${process.env.API_URL}/usuario/verificar', {
+      const response = await fetch(API_URL + '/usuario/verificar', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
@@ -127,7 +149,7 @@ async function carregarHabitos() {
   if (!await checarLogin()) return;
 
   try {
-    const resposta = await fazerRequisicaoAutenticada('${process.env.API_URL}/habito');
+    const resposta = await fazerRequisicaoAutenticada(API_URL + '/habito');
     
     if (!resposta.ok) {
       throw new Error('Erro ao buscar hábitos');
@@ -220,7 +242,7 @@ async function editarHabitoCard(habitoId, event) {
   event.stopPropagation(); // Impedir que clique propague para o card
   
   try {
-    const resposta = await fazerRequisicaoAutenticada('${process.env.API_URL}/habito');
+    const resposta = await fazerRequisicaoAutenticada(API_URL + '/habito');
     if (resposta.ok) {
       const habitos = await resposta.json();
       const habito = habitos.find(h => h._id === habitoId);
@@ -274,7 +296,7 @@ async function adicionarHabito() {
 
     // Se não está editando, é uma adição normal
     // Verificar se já atingiu o limite de 3 hábitos
-    const resposta = await fazerRequisicaoAutenticada('${process.env.API_URL}/habito');
+    const resposta = await fazerRequisicaoAutenticada(API_URL + '/habito');
     if (resposta.ok) {
       const habitosExistentes = await resposta.json();
       if (habitosExistentes.length >= 3) {
@@ -284,7 +306,7 @@ async function adicionarHabito() {
       }
     }
 
-    const respostaCriar = await fazerRequisicaoAutenticada('${process.env.API_URL}/habito/create', {
+    const respostaCriar = await fazerRequisicaoAutenticada(API_URL + '/habito/create', {
       method: 'POST',
       body: JSON.stringify({
         nome_habito: nomeHabito,
@@ -320,7 +342,7 @@ async function editarHabito(habitoId) {
   }
 
   try {
-    const resposta = await fetch(`${process.env.API_URL}/habito/${habitoId}`, {
+    const resposta = await fetch(API_URL + `/habito/${habitoId}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json'
@@ -367,11 +389,11 @@ async function deletarHabito(habitoId) {
     let resposta;
     
     if (token) {
-      resposta = await fazerRequisicaoAutenticada(`${process.env.API_URL}/habito/${habitoId}`, {
+      resposta = await fazerRequisicaoAutenticada(API_URL + `/habito/${habitoId}`, {
         method: 'DELETE'
       });
     } else {
-      resposta = await fazerRequisicaoAutenticada('${process.env.API_URL}/habito/delete', {
+      resposta = await fazerRequisicaoAutenticada(API_URL + '/habito/delete', {
         method: 'DELETE',
         body: JSON.stringify({
           habito_id: habitoId
@@ -434,7 +456,7 @@ async function trocarSenha() {
     
     if (token) {
       // Tentar com JWT (sem nome_usuario no body)
-      resposta = await fazerRequisicaoAutenticada('${process.env.API_URL}/usuario/trocarSenha', {
+      resposta = await fazerRequisicaoAutenticada(API_URL + '/usuario/trocarSenha', {
         method: 'PUT',
         body: JSON.stringify({
           senha_antiga: senhaAntiga,
@@ -444,7 +466,7 @@ async function trocarSenha() {
     } else {
       // Fallback para método antigo (com nome_usuario no body)
       const nomeUsuario = localStorage.getItem('nome_usuario');
-      resposta = await fetch('${process.env.API_URL}/usuario/trocarSenha', {
+      resposta = await fetch(API_URL + '/usuario/trocarSenha', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -478,13 +500,13 @@ async function deletarConta() {
     
     if (token) {
       // Tentar com JWT (sem body)
-      resposta = await fazerRequisicaoAutenticada('${process.env.API_URL}/usuario/delete', {
+      resposta = await fazerRequisicaoAutenticada(API_URL + '/usuario/delete', {
         method: 'DELETE'
       });
     } else {
       // Fallback para método antigo (com nome_usuario no body)
       const nomeUsuario = localStorage.getItem('nome_usuario');
-      resposta = await fetch('${process.env.API_URL}/usuario/delete', {
+      resposta = await fetch(API_URL + '/usuario/delete', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -515,7 +537,7 @@ async function logout() {
     
     if (token) {
       // Tentar logout com JWT
-      await fetch('${process.env.API_URL}/usuario/logout', {
+      await fetch(API_URL + '/usuario/logout', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -593,9 +615,6 @@ function setupModais() {
 
 // Inicialização
 window.onload = async () => {
-  await checarLogin();
-  setupPerfil();
-  setupCardsHabitos();
-  setupModais();
-  carregarHabitos();
+  await carregarAPIConfig();
+  checarLogin();
 };
