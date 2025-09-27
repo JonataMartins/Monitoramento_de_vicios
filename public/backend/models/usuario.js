@@ -9,6 +9,14 @@ const usuarioSchema = new mongoose.Schema({
   senha: {
     type: String,
     required: true,
+  },
+  ultimo_token: {
+    type: String,
+    default: null,
+  },
+  data_ultimo_login: {
+    type: Date,
+    default: null,
   }
 });
 

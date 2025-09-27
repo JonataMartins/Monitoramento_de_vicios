@@ -1,6 +1,7 @@
 const express = require('express');
 const Usuario = require('../models/usuario');
 const crypto = require('crypto');
+const jwt = require('jsonwebtoken');
 const router = express.Router();
 
 // Função para criptografar a senha
@@ -9,6 +10,37 @@ function hashSenha(senha) {
   hash.update(senha);
   return hash.digest('hex');
 }
+
+// **Middleware para verificar token - ADICIONAR ESTA FUNÇÃO**
+const verificarToken = async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      return res.status(401).json({ message: 'Token não fornecido' });
+    }
+
+    const token = authHeader.split(' ')[1];
+    
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const usuario = await Usuario.findById(decoded.userId);
+    
+    if (!usuario) {
+      return res.status(401).json({ message: 'Usuário não encontrado' });
+    }
+
+    if (usuario.ultimo_token !== token) {
+      return res.status(401).json({ message: 'Sessão expirada. Faça login novamente.' });
+    }
+
+    req.usuario = usuario;
+    next();
+  } catch (err) {
+    if (err.name === 'TokenExpiredError') {
+      return res.status(401).json({ message: 'Token expirado. Faça login novamente.' });
+    }
+    return res.status(401).json({ message: 'Token inválido' });
+  }
+};
 
 // **Rota para Criar Usuário**
 /**
@@ -44,16 +76,12 @@ router.post('/create', async (req, res) => {
   const { nome_usuario, senha } = req.body;
 
   try {
-    // Verifica se o usuário já existe
     const usuarioExistente = await Usuario.findOne({ nome_usuario });
     if (usuarioExistente) {
       return res.status(400).json({ message: 'Usuário já existe!' });
     }
 
-    // Criptografa a senha
     const senhaCriptografada = hashSenha(senha);
-
-    // Cria o novo usuário
     const novoUsuario = new Usuario({ nome_usuario, senha: senhaCriptografada });
     await novoUsuario.save();
 
@@ -224,5 +252,7 @@ router.delete('/delete', async (req, res) => {
   }
 });
 
-// Exportando o router para ser utilizado no server.js
+// **REMOVER AS ROTAS COM JWT POR ENQUANTO - vamos implementar gradualmente**
+// Manter apenas as rotas básicas que já funcionam
+
 module.exports = router;

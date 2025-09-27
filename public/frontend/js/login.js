@@ -16,11 +16,20 @@ loginForm.addEventListener("submit", async function (e) {
     const result = await response.json();
 
     if (response.ok) {
-      localStorage.setItem('authToken', result.token);
-      localStorage.setItem('nome_usuario', nome_usuario);
-
-      alert(result.message);
-      window.location.href = 'habitos.html';
+      // **CORRIGIDO: Verificar se o token existe antes de salvar**
+      if (result.token) {
+        localStorage.setItem('authToken', result.token);
+        localStorage.setItem('nome_usuario', result.usuario.nome_usuario);
+        localStorage.setItem('user_id', result.usuario.id);
+        
+        alert(result.message);
+        window.location.href = 'habitos.html';
+      } else {
+        // Se não há token, usar a abordagem antiga
+        localStorage.setItem('nome_usuario', nome_usuario);
+        alert('Login bem-sucedido!');
+        window.location.href = 'habitos.html';
+      }
     } else {
       alert(result.message);
     }

@@ -27,8 +27,20 @@ const swaggerOptions = {
       version: '1.0.0',
       description: 'Documentação da API para monitoramento de vícios',
     },
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+        }
+      }
+    },
+    security: [{
+      bearerAuth: []
+    }]
   },
-  apis: ['./public/backend/routes/usuario.js', './public/backend/routes/habito.js'],
+  apis: ['./public/backend/routes/*.js'], // Atualizado para pegar todos os arquivos
 };
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerJsdoc(swaggerOptions)));
 
