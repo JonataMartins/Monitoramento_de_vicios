@@ -12,7 +12,7 @@ async function checarLogin() {
   // Se tem token, verificar se é válido
   if (token) {
     try {
-      const response = await fetch('http://localhost:3000/usuario/verificar', {
+      const response = await fetch('${process.env.API_URL}/usuario/verificar', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
@@ -127,7 +127,7 @@ async function carregarHabitos() {
   if (!await checarLogin()) return;
 
   try {
-    const resposta = await fazerRequisicaoAutenticada('http://localhost:3000/habito');
+    const resposta = await fazerRequisicaoAutenticada('${process.env.API_URL}/habito');
     
     if (!resposta.ok) {
       throw new Error('Erro ao buscar hábitos');
@@ -220,7 +220,7 @@ async function editarHabitoCard(habitoId, event) {
   event.stopPropagation(); // Impedir que clique propague para o card
   
   try {
-    const resposta = await fazerRequisicaoAutenticada('http://localhost:3000/habito');
+    const resposta = await fazerRequisicaoAutenticada('${process.env.API_URL}/habito');
     if (resposta.ok) {
       const habitos = await resposta.json();
       const habito = habitos.find(h => h._id === habitoId);
@@ -274,7 +274,7 @@ async function adicionarHabito() {
 
     // Se não está editando, é uma adição normal
     // Verificar se já atingiu o limite de 3 hábitos
-    const resposta = await fazerRequisicaoAutenticada('http://localhost:3000/habito');
+    const resposta = await fazerRequisicaoAutenticada('${process.env.API_URL}/habito');
     if (resposta.ok) {
       const habitosExistentes = await resposta.json();
       if (habitosExistentes.length >= 3) {
@@ -284,7 +284,7 @@ async function adicionarHabito() {
       }
     }
 
-    const respostaCriar = await fazerRequisicaoAutenticada('http://localhost:3000/habito/create', {
+    const respostaCriar = await fazerRequisicaoAutenticada('${process.env.API_URL}/habito/create', {
       method: 'POST',
       body: JSON.stringify({
         nome_habito: nomeHabito,
@@ -320,7 +320,7 @@ async function editarHabito(habitoId) {
   }
 
   try {
-    const resposta = await fetch(`http://localhost:3000/habito/${habitoId}`, {
+    const resposta = await fetch(`${process.env.API_URL}/habito/${habitoId}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json'
@@ -367,11 +367,11 @@ async function deletarHabito(habitoId) {
     let resposta;
     
     if (token) {
-      resposta = await fazerRequisicaoAutenticada(`http://localhost:3000/habito/${habitoId}`, {
+      resposta = await fazerRequisicaoAutenticada(`${process.env.API_URL}/habito/${habitoId}`, {
         method: 'DELETE'
       });
     } else {
-      resposta = await fazerRequisicaoAutenticada('http://localhost:3000/habito/delete', {
+      resposta = await fazerRequisicaoAutenticada('${process.env.API_URL}/habito/delete', {
         method: 'DELETE',
         body: JSON.stringify({
           habito_id: habitoId
@@ -434,7 +434,7 @@ async function trocarSenha() {
     
     if (token) {
       // Tentar com JWT (sem nome_usuario no body)
-      resposta = await fazerRequisicaoAutenticada('http://localhost:3000/usuario/trocarSenha', {
+      resposta = await fazerRequisicaoAutenticada('${process.env.API_URL}/usuario/trocarSenha', {
         method: 'PUT',
         body: JSON.stringify({
           senha_antiga: senhaAntiga,
@@ -444,7 +444,7 @@ async function trocarSenha() {
     } else {
       // Fallback para método antigo (com nome_usuario no body)
       const nomeUsuario = localStorage.getItem('nome_usuario');
-      resposta = await fetch('http://localhost:3000/usuario/trocarSenha', {
+      resposta = await fetch('${process.env.API_URL}/usuario/trocarSenha', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -478,13 +478,13 @@ async function deletarConta() {
     
     if (token) {
       // Tentar com JWT (sem body)
-      resposta = await fazerRequisicaoAutenticada('http://localhost:3000/usuario/delete', {
+      resposta = await fazerRequisicaoAutenticada('${process.env.API_URL}/usuario/delete', {
         method: 'DELETE'
       });
     } else {
       // Fallback para método antigo (com nome_usuario no body)
       const nomeUsuario = localStorage.getItem('nome_usuario');
-      resposta = await fetch('http://localhost:3000/usuario/delete', {
+      resposta = await fetch('${process.env.API_URL}/usuario/delete', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -515,7 +515,7 @@ async function logout() {
     
     if (token) {
       // Tentar logout com JWT
-      await fetch('http://localhost:3000/usuario/logout', {
+      await fetch('${process.env.API_URL}/usuario/logout', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });
