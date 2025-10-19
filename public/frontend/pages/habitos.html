@@ -1,649 +1,293 @@
-let API_URL = '';
-let editandoHabitoId = null;
-let currentTab = 'habitos';
+<!DOCTYPE html>
+<html lang="pt-br">
 
-// Função para carregar a configuração da API
-async function carregarAPIConfig() {
-  try {
-    const configResponse = await fetch('/api/config');
-    const config = await configResponse.json();
-    API_URL = config.apiUrl;
-
-    await carregarHabitos();
-    setupPerfil();
-    setupCardsHabitos();
-    setupModais();
-    
-  } catch (erro) {
-    console.error('Erro ao carregar a configuração da API:', erro);
-    // Fallback para URL padrão
-    API_URL = 'http://localhost:3000';
-    await carregarHabitos();
-    setupPerfil();
-    setupCardsHabitos();
-    setupModais();
-  }
-}
-
-// Verifica login
-async function checarLogin() {
-  const nomeUsuario = localStorage.getItem('nome_usuario');
-  if (!nomeUsuario) {
-    window.location.href = 'login.html';
-    return false;
-  }
-  return true;
-}
-
-// ========== FUNÇÕES PARA ABAS ==========
-
-function mudarTab(tab) {
-  currentTab = tab;
-  
-  // Remove active de todas as tabs
-  document.querySelectorAll('.tab').forEach(t => {
-    t.classList.remove('active');
-  });
-  
-  // Remove active de todos os conteúdos
-  document.querySelectorAll('.tab-content').forEach(c => {
-    c.classList.remove('active');
-  });
-  
-  // Ativa a tab clicada
-  if (tab === 'habitos') {
-    document.getElementById('tabHabitos').classList.add('active');
-    document.getElementById('contentHabitos').classList.add('active');
-  } else {
-    document.getElementById('tabVicios').classList.add('active');
-    document.getElementById('contentVicios').classList.add('active');
-  }
-  
-  // Carrega os dados
-  if (tab === 'habitos') {
-    carregarHabitos();
-  } else {
-    carregarVicios();
-  }
-}
-
-// ========== FUNÇÕES PARA HÁBITOS ==========
-
-async function carregarHabitos() {
-  if (!await checarLogin()) return;
-
-  try {
-    const nomeUsuario = localStorage.getItem('nome_usuario');
-    const resposta = await fetch(API_URL + '/habito', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        nome_usuario: nomeUsuario
-      })
-    });
-    
-    const habitos = await resposta.json();
-    preencherCardsHabitos(habitos);
-    
-  } catch (erro) {
-    console.error('Erro ao carregar hábitos:', erro);
-    exibirEstadoVazio('habitos');
-  }
-}
-
-function preencherCardsHabitos(habitos) {
-  const cards = document.querySelectorAll('#contentHabitos .add-habit-card');
-  const emptyState = document.getElementById('emptyStateHabitos');
-  
-  if (!habitos || habitos.length === 0) {
-    exibirEstadoVazio('habitos');
-    return;
-  }
-  
-  emptyState.style.display = 'none';
-  
-  // Resetar cards
-  cards.forEach((card, index) => {
-    card.innerHTML = `<i>📝</i><span>Adicione seu hábito</span>`;
-    card.onclick = () => abrirModalParaCard(index, 'habito');
-    card.style.cursor = 'pointer';
-    card.classList.remove('habit-card-filled');
-  });
-  
-  // Preencher com hábitos existentes
-  habitos.forEach((habito, index) => {
-    if (index < cards.length) {
-      const card = cards[index];
-      card.innerHTML = `
-        <div class="habit-card-content">
-          <h3>${habito.nome_habito}</h3>
-          ${habito.descricao ? `<p class="habit-description">${habito.descricao}</p>` : ''}
-          <div class="habit-card-actions">
-            <button class="icon-btn small-btn" title="Editar" onclick="editarItemCard('${habito._id}', 'habito', event)">✏️</button>
-            <button class="icon-btn small-btn" title="Excluir" onclick="deletarItemCard('${habito._id}', 'habito', event)">🗑️</button>
-          </div>
-        </div>
-      `;
-      card.onclick = null;
-      card.style.cursor = 'default';
-      card.classList.add('habit-card-filled');
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meus Hábitos e Vícios - HabitFlow</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    /* Estilos para as abas */
+    .tabs-container {
+      display: flex;
+      margin-bottom: 0;
+      border-bottom: 2px solid #e0e0e0;
+      position: relative;
+      z-index: 1000;
     }
-  });
-}
 
-// ========== FUNÇÕES PARA VÍCIOS ==========
-
-async function carregarVicios() {
-  if (!await checarLogin()) return;
-
-  try {
-    const nomeUsuario = localStorage.getItem('nome_usuario');
-    const resposta = await fetch(API_URL + '/vicio', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        nome_usuario: nomeUsuario
-      })
-    });
-    
-    const vicios = await resposta.json();
-    preencherCardsVicios(vicios);
-    
-  } catch (erro) {
-    console.error('Erro ao carregar vícios:', erro);
-    exibirEstadoVazio('vicios');
-  }
-}
-
-function preencherCardsVicios(vicios) {
-  const cards = document.querySelectorAll('#contentVicios .add-habit-card');
-  const emptyState = document.getElementById('emptyStateVicios');
-  
-  if (!vicios || vicios.length === 0) {
-    exibirEstadoVazio('vicios');
-    return;
-  }
-  
-  emptyState.style.display = 'none';
-  
-  // Resetar cards
-  cards.forEach((card, index) => {
-    card.innerHTML = `<i>🚫</i><span>Adicione seu vício</span>`;
-    card.onclick = () => abrirModalParaCard(index, 'vicio');
-    card.style.cursor = 'pointer';
-    card.classList.remove('habit-card-filled', 'vicio-card-filled');
-  });
-  
-  // Preencher com vícios existentes
-  vicios.forEach((vicio, index) => {
-    if (index < cards.length) {
-      const card = cards[index];
-      card.innerHTML = `
-        <div class="habit-card-content">
-          <h3>${vicio.nome_habito}</h3>
-          ${vicio.descricao ? `<p class="habit-description">${vicio.descricao}</p>` : ''}
-          <div class="streak-info current-streak">📅 Sequência atual: ${vicio.sequencia_atual || 0} dias</div>
-          <div class="streak-info best-streak">🏆 Melhor sequência: ${vicio.melhor_sequencia || 0} dias</div>
-          <div class="streak-info total-days">📊 Total controlado: ${vicio.total_dias || 0} dias</div>
-          <div class="habit-card-actions">
-            <button class="ceder-btn" onclick="cederAoVicio('${vicio._id}', event)">🚫 Ceder hoje</button>
-            <button class="controlado-btn" onclick="controlarVicio('${vicio._id}', event)">✅ Controlado hoje</button>
-            <button class="icon-btn small-btn" title="Editar" onclick="editarItemCard('${vicio._id}', 'vicio', event)">✏️</button>
-            <button class="icon-btn small-btn" title="Excluir" onclick="deletarItemCard('${vicio._id}', 'vicio', event)">🗑️</button>
-          </div>
-        </div>
-      `;
-      card.onclick = null;
-      card.style.cursor = 'default';
-      card.classList.add('habit-card-filled', 'vicio-card-filled');
+    .tab {
+      padding: 12px 24px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      font-size: 16px;
+      border-bottom: 3px solid transparent;
+      transition: all 0.3s ease;
+      flex: 1;
+      text-align: center;
+      position: relative;
+      z-index: 1000;
     }
-  });
-}
 
-function exibirEstadoVazio(tipo) {
-  const emptyState = document.getElementById(`emptyState${tipo === 'habitos' ? 'Habitos' : 'Vicios'}`);
-  emptyState.style.display = 'block';
-}
+    .tab.active {
+      border-bottom-color: #4CAF50;
+      color: #4CAF50;
+      font-weight: bold;
+    }
 
-// ========== FUNÇÕES COMPARTILHADAS ==========
+    .tab-vicio.active {
+      border-bottom-color: #f44336;
+      color: #f44336;
+    }
 
-function abrirModalParaCard(index, tipo) {
-  editandoHabitoId = null;
-  const modalTitle = document.getElementById('modalHabitTitle');
-  
-  modalTitle.textContent = tipo === 'vicio' ? 'Adicionar Novo Vício' : 'Adicionar Novo Hábito';
-  document.getElementById('habitType').value = tipo;
-  document.getElementById('addHabitModal').classList.add('active');
-  document.getElementById('habitName').value = '';
-  document.getElementById('habitDescription').value = '';
-  
-  configurarBotaoSalvar();
-}
+    .tab-content {
+      display: none;
+    }
 
-async function editarItemCard(itemId, tipo, event) {
-  event.stopPropagation();
-  
-  try {
-    const nomeUsuario = localStorage.getItem('nome_usuario');
-    const endpoint = tipo === 'vicio' ? '/vicio' : '/habito';
-    const resposta = await fetch(API_URL + endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        nome_usuario: nomeUsuario
-      })
-    });
-    
-    if (resposta.ok) {
-      const items = await resposta.json();
-      const item = items.find(h => h._id === itemId);
+    .tab-content.active {
+      display: block;
+    }
+
+    /* CORREÇÕES ESPECÍFICAS PARA VÍCIOS */
+    .vicio-card-filled {
+      background: linear-gradient(135deg, #ffebee, #ffffff) !important;
+      border: 2px solid #f44336 !important;
+      min-height: 220px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+    }
+
+    .habit-card-content {
+      width: 100%;
+      padding: 10px;
+      text-align: center;
+    }
+
+    .habit-card-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 15px;
+    }
+
+    .ceder-btn, .controlado-btn {
+      flex: 1;
+      min-width: 120px;
+      padding: 10px 12px;
+      font-size: 12px;
+      white-space: nowrap;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin: 2px;
+    }
+
+    .ceder-btn {
+      background-color: #f44336;
+      color: white;
+    }
+
+    .ceder-btn:hover {
+      background-color: #d32f2f;
+      transform: translateY(-2px);
+    }
+
+    .controlado-btn {
+      background-color: #4CAF50;
+      color: white;
+    }
+
+    .controlado-btn:hover {
+      background-color: #388e3c;
+      transform: translateY(-2px);
+    }
+
+    .streak-info {
+      margin: 4px 0;
+      padding: 6px 10px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .current-streak {
+      background: #ffebee;
+      color: #d32f2f;
+    }
+
+    .best-streak {
+      background: #e3f2fd;
+      color: #1976d2;
+    }
+
+    .total-days {
+      background: #f3e5f5;
+      color: #7b1fa2;
+    }
+
+    /* Garantir que os botões de ação sejam visíveis */
+    .small-btn {
+      background: rgba(0,0,0,0.1);
+      border-radius: 5px;
+      padding: 6px 8px !important;
+      font-size: 12px !important;
+      margin: 2px;
+    }
+
+    .habit-description {
+      font-size: 12px;
+      color: #666;
+      margin: 8px 0;
+    }
+
+    /* Layout responsivo para os cards */
+    @media (max-width: 480px) {
+      .add-habits-cards {
+        grid-template-columns: 1fr;
+      }
       
-      if (item) {
-        editandoHabitoId = itemId;
-        const modalTitle = document.getElementById('modalHabitTitle');
-        
-        modalTitle.textContent = tipo === 'vicio' ? 'Editar Vício' : 'Editar Hábito';
-        document.getElementById('habitName').value = item.nome_habito;
-        document.getElementById('habitDescription').value = item.descricao || '';
-        document.getElementById('habitType').value = tipo;
-        
-        configurarBotaoSalvar();
-        document.getElementById('addHabitModal').classList.add('active');
+      .ceder-btn, .controlado-btn {
+        min-width: 100px;
+        font-size: 11px;
+      }
+      
+      .habit-card-content h3 {
+        font-size: 14px;
       }
     }
-  } catch (erro) {
-    console.error(erro);
-    alert('Erro ao carregar item para edição');
-  }
-}
+  </style>
+</head>
 
-function configurarBotaoSalvar() {
-  const saveBtn = document.getElementById('saveHabit');
-  saveBtn.textContent = editandoHabitoId ? 'Atualizar' : 'Salvar';
-}
+<body>
+  <div class="container">
+    <!-- Header com abas -->
+    <div class="habits-header">
+      <div class="tabs-container">
+        <button class="tab active" id="tabHabitos" onclick="mudarTab('habitos')">📊 Hábitos</button>
+        <button class="tab tab-vicio" id="tabVicios" onclick="mudarTab('vicios')">🚫 Vícios</button>
+      </div>
+      <div class="profile-menu" id="profileMenu">
+        <button class="icon-btn" id="profileBtn">⚙️</button>
+        <div class="profile-info" id="dropdownMenu">
+          <div class="profile-item" id="username">Usuário</div>
+          <div class="profile-item" id="settings">Configurações</div>
+          <div class="profile-item" id="logout">Sair</div>
+        </div>
+      </div>
+    </div>
 
-// Adicionar/Editar item - CORRIGIDA
-async function adicionarHabito() {
-  const nomeHabito = document.getElementById('habitName').value;
-  const descricao = document.getElementById('habitDescription').value;
-  const tipo = document.getElementById('habitType').value;
-  const nomeUsuario = localStorage.getItem('nome_usuario');
+    <!-- Conteúdo dos Hábitos -->
+    <div class="tab-content active" id="contentHabitos">
+      <div class="add-habits-cards">
+        <div class="add-habit-card" id="addHabitCard1">
+          <i>📝</i>
+          <span>Adicione seu hábito</span>
+        </div>
+        <div class="add-habit-card" id="addHabitCard2">
+          <i>📝</i>
+          <span>Adicione seu hábito</span>
+        </div>
+        <div class="add-habit-card" id="addHabitCard3">
+          <i>📝</i>
+          <span>Adicione seu hábito</span>
+        </div>
+      </div>
 
-  if (!nomeHabito.trim()) {
-    alert('Por favor, insira um nome.');
-    return;
-  }
+      <div class="habits-container">
+        <ul id="habitosList"></ul>
+        <div class="empty-state" id="emptyStateHabitos" style="display: none;">
+          <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2364748b'><path d='M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z'/></svg>" alt="Nenhum hábito">
+          <h3>Nenhum hábito cadastrado</h3>
+          <p>Comece adicionando seu primeiro hábito!</p>
+        </div>
+      </div>
+    </div>
 
-  try {
-    // Se está editando
-    if (editandoHabitoId) {
-      await editarItem(editandoHabitoId, tipo);
-      return;
-    }
+    <!-- Conteúdo dos Vícios -->
+    <div class="tab-content" id="contentVicios">
+      <div class="add-habits-cards">
+        <div class="add-habit-card vicio-card" id="addVicioCard1">
+          <i>🚫</i>
+          <span>Adicione seu vício</span>
+        </div>
+        <div class="add-habit-card vicio-card" id="addVicioCard2">
+          <i>🚫</i>
+          <span>Adicione seu vício</span>
+        </div>
+        <div class="add-habit-card vicio-card" id="addVicioCard3">
+          <i>🚫</i>
+          <span>Adicione seu vício</span>
+        </div>
+      </div>
 
-    // Verificar limite
-    const endpoint = tipo === 'vicio' ? '/vicio' : '/habito';
-    const resposta = await fetch(API_URL + endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        nome_usuario: nomeUsuario
-      })
-    });
-    
-    if (resposta.ok) {
-      const itemsExistentes = await resposta.json();
-      if (itemsExistentes.length >= 3) {
-        alert(`Limite máximo de 3 ${tipo === 'vicio' ? 'vícios' : 'hábitos'} atingido!`);
-        fecharModalHabito();
-        return;
-      }
-    }
+      <div class="habits-container">
+        <ul id="viciosList"></ul>
+        <div class="empty-state" id="emptyStateVicios" style="display: none;">
+          <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2364748b'><path d='M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z'/></svg>" alt="Nenhum vício">
+          <h3>Nenhum vício cadastrado</h3>
+          <p>Adicione um vício que deseja controlar!</p>
+        </div>
+      </div>
+    </div>
+  </div>
 
-    const createEndpoint = tipo === 'vicio' ? '/vicio/create' : '/habito/create';
-    const respostaCriar = await fetch(API_URL + createEndpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        nome_usuario: nomeUsuario,
-        nome_habito: nomeHabito,
-        descricao: descricao
-      })
-    });
+  <!-- Modal para adicionar hábito/vício -->
+  <div class="modal" id="addHabitModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modalHabitTitle">Adicionar Novo Hábito</h2>
+        <button class="close-modal" id="closeAddHabitModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="habitName">Nome</label>
+          <input type="text" id="habitName" class="form-control" placeholder="Ex: Exercitar-se / Fumar">
+        </div>
+        <div class="form-group">
+          <label for="habitType">Tipo</label>
+          <select id="habitType" class="form-control">
+            <option value="habito">Hábito</option>
+            <option value="vicio">Vício</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="habitDescription">Descrição (opcional)</label>
+          <textarea id="habitDescription" class="form-control" placeholder="Descreva seu hábito/vício..." rows="3"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-modal btn-secondary" id="cancelAddHabit">Cancelar</button>
+        <button class="btn-modal btn-primary" id="saveHabit">Salvar</button>
+      </div>
+    </div>
+  </div>
 
-    if (!respostaCriar.ok) {
-      const erro = await respostaCriar.json();
-      throw new Error(erro.message);
-    }
+  <!-- Modal de configurações -->
+  <div class="modal" id="settingsModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Configurações</h2>
+        <button class="close-modal" id="closeSettingsModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="userName">Nome do Usuário</label>
+          <div style="display: flex; gap: 10px;">
+            <input type="text" id="userName" class="form-control" value="Usuário">
+            <button class="btn-modal btn-primary" id="editName">Editar</button>
+          </div>
+        </div>
+        <button class="btn-modal btn-secondary" id="changePassword" style="width: 100%; margin-bottom: 10px;">Trocar Senha</button>
+        <button class="btn-modal btn-danger" id="deleteAccount" style="width: 100%;">Deletar Conta</button>
+      </div>
+    </div>
+  </div>
 
-    alert(`${tipo === 'vicio' ? 'Vício' : 'Hábito'} criado com sucesso!`);
-    fecharModalHabito();
-    
-    // Recarrega a tab atual
-    if (currentTab === 'habitos') {
-      carregarHabitos();
-    } else {
-      carregarVicios();
-    }
-    
-  } catch (erro) {
-    console.error(erro);
-    alert(`Erro ao criar ${tipo === 'vicio' ? 'vício' : 'hábito'}: ${erro.message}`);
-  }
-}
+  <script src="../js/habitos.js"></script>
+</body>
 
-// Função para editar item - CORRIGIDA
-async function editarItem(itemId, tipo) {
-  const nomeHabito = document.getElementById('habitName').value;
-  const descricao = document.getElementById('habitDescription').value;
-  const nomeUsuario = localStorage.getItem('nome_usuario');
-
-  if (!nomeHabito.trim()) {
-    alert('Por favor, insira um nome.');
-    return;
-  }
-
-  try {
-    const endpoint = tipo === 'vicio' ? '/vicio' : '/habito';
-    const resposta = await fetch(API_URL + `${endpoint}/${itemId}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        nome_usuario: nomeUsuario,
-        nome_habito: nomeHabito,
-        descricao: descricao
-      })
-    });
-
-    if (!resposta.ok) {
-      const erro = await resposta.json();
-      throw new Error(erro.message);
-    }
-
-    alert(`${tipo === 'vicio' ? 'Vício' : 'Hábito'} atualizado com sucesso!`);
-    fecharModalHabito();
-    
-    // Recarrega a tab atual
-    if (currentTab === 'habitos') {
-      carregarHabitos();
-    } else {
-      carregarVicios();
-    }
-    
-  } catch (erro) {
-    console.error(erro);
-    alert(`Erro ao editar ${tipo === 'vicio' ? 'vício' : 'hábito'}: ${erro.message}`);
-  }
-}
-
-// Deletar item - CORRIGIDA
-async function deletarItemCard(itemId, tipo, event) {
-  event.stopPropagation();
-  
-  if (!confirm(`Tem certeza que deseja excluir este ${tipo === 'vicio' ? 'vício' : 'hábito'}?`)) return;
-
-  try {
-    const nomeUsuario = localStorage.getItem('nome_usuario');
-    const endpoint = tipo === 'vicio' ? '/vicio/delete' : '/habito/delete';
-    const resposta = await fetch(API_URL + endpoint, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        nome_usuario: nomeUsuario,
-        habito_id: itemId
-      })
-    });
-
-    if (!resposta.ok) {
-      const erro = await resposta.json();
-      throw new Error(erro.message);
-    }
-
-    alert(`${tipo === 'vicio' ? 'Vício' : 'Hábito'} excluído com sucesso!`);
-    
-    if (currentTab === 'habitos') {
-      carregarHabitos();
-    } else {
-      carregarVicios();
-    }
-  } catch (erro) {
-    console.error(erro);
-    alert(`Erro ao excluir ${tipo === 'vicio' ? 'vício' : 'hábito'}: ${erro.message}`);
-  }
-}
-
-// Ceder ao vício - CORRIGIDA
-async function cederAoVicio(vicioId, event) {
-  event.stopPropagation();
-  
-  if (!confirm('Deseja marcar que cedeu ao vício hoje? Isso reiniciará sua sequência.')) return;
-  
-  try {
-    const nomeUsuario = localStorage.getItem('nome_usuario');
-    const resposta = await fetch(API_URL + `/vicio/${vicioId}/ceder`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        nome_usuario: nomeUsuario
-      })
-    });
-
-    if (!resposta.ok) {
-      const erro = await resposta.json();
-      throw new Error(erro.message);
-    }
-
-    alert('Registrado! Amanhã é um novo dia para recomeçar! 💪');
-    carregarVicios();
-  } catch (erro) {
-    console.error(erro);
-    alert('Erro ao registrar: ' + erro.message);
-  }
-}
-
-// Controlar vício - CORRIGIDA
-async function controlarVicio(vicioId, event) {
-  event.stopPropagation();
-  
-  try {
-    const nomeUsuario = localStorage.getItem('nome_usuario');
-    const resposta = await fetch(API_URL + `/vicio/${vicioId}/controlado`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        nome_usuario: nomeUsuario
-      })
-    });
-
-    if (!resposta.ok) {
-      const erro = await resposta.json();
-      throw new Error(erro.message);
-    }
-
-    alert('Parabéns! Mais um dia sem ceder ao vício! 🎉');
-    carregarVicios();
-  } catch (erro) {
-    console.error(erro);
-    alert('Erro ao registrar: ' + erro.message);
-  }
-}
-
-function fecharModalHabito() {
-  document.getElementById('addHabitModal').classList.remove('active');
-  document.getElementById('habitName').value = '';
-  document.getElementById('habitDescription').value = '';
-  editandoHabitoId = null;
-  configurarBotaoSalvar();
-}
-
-// ========== FUNÇÕES EXISTENTES ==========
-
-// Modal de configurações
-function abrirModalConfiguracoes() {
-  document.getElementById('userName').value = localStorage.getItem('nome_usuario') || 'Usuário';
-  document.getElementById('settingsModal').classList.add('active');
-}
-
-function fecharModalConfiguracoes() {
-  document.getElementById('settingsModal').classList.remove('active');
-}
-
-// Trocar senha - CORRIGIDA
-async function trocarSenha() {
-  const senhaAntiga = prompt('Digite sua senha atual:');
-  const senhaNova = prompt('Digite sua nova senha:');
-  
-  if (!senhaAntiga || !senhaNova) return;
-  
-  try {
-    const nomeUsuario = localStorage.getItem('nome_usuario');
-    const resposta = await fetch(API_URL + '/usuario/trocarSenha', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        nome_usuario: nomeUsuario,
-        senha_antiga: senhaAntiga,
-        senha_nova: senhaNova
-      })
-    });
-
-    if (!resposta.ok) {
-      const erro = await resposta.json();
-      throw new Error(erro.message);
-    }
-
-    alert('Senha alterada com sucesso!');
-    
-  } catch (erro) {
-    console.error(erro);
-    alert('Erro ao trocar senha: ' + erro.message);
-  }
-}
-
-// Deletar conta - CORRIGIDA
-async function deletarConta() {
-  if (!confirm('Tem certeza que deseja deletar sua conta? Esta ação não pode ser desfeita.')) return;
-
-  try {
-    const nomeUsuario = localStorage.getItem('nome_usuario');
-    const resposta = await fetch(API_URL + '/usuario/delete', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        nome_usuario: nomeUsuario
-      })
-    });
-
-    if (!resposta.ok) {
-      const erro = await resposta.json();
-      throw new Error(erro.message);
-    }
-
-    localStorage.clear();
-    alert('Conta deletada com sucesso!');
-    window.location.href = 'login.html';
-    
-  } catch (erro) {
-    console.error(erro);
-    alert('Erro ao deletar conta: ' + erro.message);
-  }
-}
-
-// Logout
-async function logout() {
-  try {
-    const token = localStorage.getItem('authToken');
-    if (token) {
-      await fetch(API_URL + '/usuario/logout', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-    }
-  } catch (erro) {
-    // Ignora erros no logout
-  } finally {
-    localStorage.clear();
-    window.location.href = 'login.html';
-  }
-}
-
-// Menu perfil
-function setupPerfil() {
-  const profileMenu = document.getElementById('profileMenu');
-  const dropdownMenu = document.getElementById('dropdownMenu');
-  const usernameEl = document.getElementById('username');
-
-  usernameEl.textContent = localStorage.getItem('nome_usuario') || 'Usuário';
-
-  profileMenu.addEventListener('click', (e) => {
-    e.stopPropagation();
-    dropdownMenu.classList.toggle('active');
-  });
-
-  window.addEventListener('click', (e) => {
-    if (!profileMenu.contains(e.target)) dropdownMenu.classList.remove('active');
-  });
-
-  document.getElementById('logout').addEventListener('click', logout);
-  document.getElementById('settings').addEventListener('click', () => {
-    dropdownMenu.classList.remove('active');
-    abrirModalConfiguracoes();
-  });
-}
-
-// Setup dos cards
-function setupCardsHabitos() {
-  const habitCards = document.querySelectorAll('#contentHabitos .add-habit-card');
-  const vicioCards = document.querySelectorAll('#contentVicios .add-habit-card');
-  
-  habitCards.forEach((card, index) => {
-    card.addEventListener('click', () => abrirModalParaCard(index, 'habito'));
-  });
-  
-  vicioCards.forEach((card, index) => {
-    card.addEventListener('click', () => abrirModalParaCard(index, 'vicio'));
-  });
-}
-
-// Fechar modais ao clicar fora
-function setupModais() {
-  window.addEventListener('click', (e) => {
-    if (e.target.id === 'addHabitModal') fecharModalHabito();
-    if (e.target.id === 'settingsModal') fecharModalConfiguracoes();
-  });
-
-  document.getElementById('closeAddHabitModal').addEventListener('click', fecharModalHabito);
-  document.getElementById('cancelAddHabit').addEventListener('click', fecharModalHabito);
-  document.getElementById('closeSettingsModal').addEventListener('click', fecharModalConfiguracoes);
-  
-  document.getElementById('saveHabit').addEventListener('click', function() {
-    adicionarHabito();
-  });
-  
-  document.getElementById('changePassword').addEventListener('click', trocarSenha);
-  document.getElementById('deleteAccount').addEventListener('click', deletarConta);
-}
-
-// Inicialização
-window.onload = async () => {
-  await carregarAPIConfig();
-  checarLogin();
-};
+</html>
