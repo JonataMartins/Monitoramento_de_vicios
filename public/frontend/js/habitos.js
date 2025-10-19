@@ -1,211 +1,128 @@
-let API_URL = ''; // Variável global para armazenar a URL da API
+let API_URL = '';
+let editandoHabitoId = null;
+let currentTab = 'habitos';
 
 // Função para carregar a configuração da API
 async function carregarAPIConfig() {
   try {
-    // Busca a configuração da URL da API
     const configResponse = await fetch('/api/config');
     const config = await configResponse.json();
     API_URL = config.apiUrl;
 
-    // Agora que a API_URL está carregada, podemos chamar as outras funções
-    await carregarHabitos();  // Essa função depende da URL da API
+    await carregarHabitos();
     setupPerfil();
     setupCardsHabitos();
     setupModais();
     
   } catch (erro) {
     console.error('Erro ao carregar a configuração da API:', erro);
-    alert('Não foi possível carregar a configuração da API. Tente novamente mais tarde.');
+    // Fallback para URL padrão
+    API_URL = 'http://localhost:3000';
+    await carregarHabitos();
+    setupPerfil();
+    setupCardsHabitos();
+    setupModais();
   }
 }
 
-// Verifica login com JWT - MODIFICADO: Adicionar fallback
+// Verifica login
 async function checarLogin() {
-  const token = localStorage.getItem('authToken');
   const nomeUsuario = localStorage.getItem('nome_usuario');
-  
-  // Se não tem nenhum método de autenticação, redireciona
-  if (!token && !nomeUsuario) {
+  if (!nomeUsuario) {
     window.location.href = 'login.html';
     return false;
   }
-
-  // Se tem token, verificar se é válido
-  if (token) {
-    try {
-      const response = await fetch(API_URL + '/usuario/verificar', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-
-      if (!response.ok) {
-        // Token inválido, tentar usar apenas o nome de usuário
-        if (nomeUsuario) {
-          localStorage.removeItem('authToken');
-          localStorage.removeItem('user_id');
-          return true; // Permite continuar com autenticação básica
-        } else {
-          localStorage.clear();
-          window.location.href = 'login.html';
-          return false;
-        }
-      }
-      return true; // Token válido
-    } catch (erro) {
-      console.error(erro);
-      // Em caso de erro na verificação, tentar com autenticação básica
-      if (nomeUsuario) {
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('user_id');
-        return true;
-      } else {
-        localStorage.clear();
-        window.location.href = 'login.html';
-        return false;
-      }
-    }
-  }
-  
-  return true; // Tem apenas nome de usuário (método antigo)
+  return true;
 }
 
-// Função para fazer requisições autenticadas - MODIFICADO: Adicionar fallback
-async function fazerRequisicaoAutenticada(url, options = {}) {
-  const token = localStorage.getItem('authToken');
-  const nomeUsuario = localStorage.getItem('nome_usuario');
+// ========== FUNÇÕES PARA ABAS ==========
+
+function mudarTab(tab) {
+  currentTab = tab;
   
-  let config;
+  // Remove active de todas as tabs
+  document.querySelectorAll('.tab').forEach(t => {
+    t.classList.remove('active');
+  });
   
-  if (token) {
-    // Tentar com JWT primeiro
-    config = {
-      ...options,
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-        ...options.headers
-      }
-    };
-  } else if (nomeUsuario) {
-    // Fallback para método antigo (POST com nome_usuario no body)
-    const body = options.body ? JSON.parse(options.body) : {};
-    body.nome_usuario = nomeUsuario;
-    
-    config = {
-      ...options,
-      method: options.method || 'POST', // Método antigo usa POST
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-      },
-      body: JSON.stringify(body)
-    };
+  // Remove active de todos os conteúdos
+  document.querySelectorAll('.tab-content').forEach(c => {
+    c.classList.remove('active');
+  });
+  
+  // Ativa a tab clicada
+  if (tab === 'habitos') {
+    document.getElementById('tabHabitos').classList.add('active');
+    document.getElementById('contentHabitos').classList.add('active');
   } else {
-    // Não tem autenticação
-    localStorage.clear();
-    window.location.href = 'login.html';
-    throw new Error('Não autenticado');
+    document.getElementById('tabVicios').classList.add('active');
+    document.getElementById('contentVicios').classList.add('active');
   }
-
-  const response = await fetch(url, config);
   
-  if (response.status === 401 && token) {
-    // Token inválido, tentar fallback
-    if (nomeUsuario) {
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('user_id');
-      
-      // Refazer a requisição com método antigo
-      const body = options.body ? JSON.parse(options.body) : {};
-      body.nome_usuario = nomeUsuario;
-      
-      const fallbackConfig = {
-        ...options,
-        method: options.method || 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...options.headers
-        },
-        body: JSON.stringify(body)
-      };
-      
-      const fallbackResponse = await fetch(url, fallbackConfig);
-      return fallbackResponse;
-    } else {
-      localStorage.clear();
-      window.location.href = 'login.html';
-      throw new Error('Sessão expirada');
-    }
+  // Carrega os dados
+  if (tab === 'habitos') {
+    carregarHabitos();
+  } else {
+    carregarVicios();
   }
-
-  return response;
 }
 
-// Variável global para controlar o modo de edição
-let editandoHabitoId = null;
+// ========== FUNÇÕES PARA HÁBITOS ==========
 
-// Carrega hábitos - MODIFICADO: Suporte a ambos os métodos
 async function carregarHabitos() {
   if (!await checarLogin()) return;
 
   try {
-    const resposta = await fazerRequisicaoAutenticada(API_URL + '/habito');
+    const nomeUsuario = localStorage.getItem('nome_usuario');
+    const resposta = await fetch(API_URL + '/habito', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        nome_usuario: nomeUsuario
+      })
+    });
     
-    if (!resposta.ok) {
-      throw new Error('Erro ao buscar hábitos');
-    }
-
     const habitos = await resposta.json();
     preencherCardsHabitos(habitos);
     
   } catch (erro) {
-    console.error(erro);
-    exibirEstadoVazio();
+    console.error('Erro ao carregar hábitos:', erro);
+    exibirEstadoVazio('habitos');
   }
 }
 
 function preencherCardsHabitos(habitos) {
-  const cards = document.querySelectorAll('.add-habit-card');
-  const emptyState = document.getElementById('emptyState');
-  const habitosList = document.getElementById('habitosList');
-  
-  // Esconder a lista tradicional
-  habitosList.innerHTML = '';
-  habitosList.style.display = 'none';
-  
-  // Mostrar os cards
-  document.querySelector('.add-habits-cards').style.display = 'grid';
+  const cards = document.querySelectorAll('#contentHabitos .add-habit-card');
+  const emptyState = document.getElementById('emptyStateHabitos');
   
   if (!habitos || habitos.length === 0) {
-    exibirEstadoVazio();
+    exibirEstadoVazio('habitos');
     return;
   }
   
-  // Esconder empty state se há hábitos
   emptyState.style.display = 'none';
   
-  // Resetar todos os cards para estado de "adicionar"
+  // Resetar cards
   cards.forEach((card, index) => {
-    card.innerHTML = `
-      <i>📝</i>
-      <span>Adicione seu hábito</span>
-    `;
-    card.onclick = () => abrirModalHabitoParaCard(index);
+    card.innerHTML = `<i>📝</i><span>Adicione seu hábito</span>`;
+    card.onclick = () => abrirModalParaCard(index, 'habito');
     card.style.cursor = 'pointer';
     card.classList.remove('habit-card-filled');
   });
   
-  // Preencher os cards com os hábitos existentes
+  // Preencher com hábitos existentes
   habitos.forEach((habito, index) => {
     if (index < cards.length) {
       const card = cards[index];
       card.innerHTML = `
         <div class="habit-card-content">
           <h3>${habito.nome_habito}</h3>
-          ${habito.descricao ? `<p>${habito.descricao}</p>` : ''}
+          ${habito.descricao ? `<p class="habit-description">${habito.descricao}</p>` : ''}
           <div class="habit-card-actions">
-            <button class="icon-btn small-btn" title="Editar" onclick="editarHabitoCard('${habito._id}', event)">✏️</button>
-            <button class="icon-btn small-btn" title="Excluir" onclick="deletarHabitoCard('${habito._id}', event)">🗑️</button>
+            <button class="icon-btn small-btn" title="Editar" onclick="editarItemCard('${habito._id}', 'habito', event)">✏️</button>
+            <button class="icon-btn small-btn" title="Excluir" onclick="deletarItemCard('${habito._id}', 'habito', event)">🗑️</button>
           </div>
         </div>
       `;
@@ -216,99 +133,189 @@ function preencherCardsHabitos(habitos) {
   });
 }
 
-function exibirEstadoVazio() {
-  const emptyState = document.getElementById('emptyState');
-  const habitosList = document.getElementById('habitosList');
-  const cardsContainer = document.querySelector('.add-habits-cards');
-  
-  emptyState.style.display = 'block';
-  habitosList.style.display = 'none';
-  cardsContainer.style.display = 'grid';
+// ========== FUNÇÕES PARA VÍCIOS ==========
+
+async function carregarVicios() {
+  if (!await checarLogin()) return;
+
+  try {
+    const nomeUsuario = localStorage.getItem('nome_usuario');
+    const resposta = await fetch(API_URL + '/vicio', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        nome_usuario: nomeUsuario
+      })
+    });
+    
+    const vicios = await resposta.json();
+    preencherCardsVicios(vicios);
+    
+  } catch (erro) {
+    console.error('Erro ao carregar vícios:', erro);
+    exibirEstadoVazio('vicios');
+  }
 }
 
-// Abrir modal para adicionar hábito em card específico
-function abrirModalHabitoParaCard(index) {
-  editandoHabitoId = null; // Modo de adição
+function preencherCardsVicios(vicios) {
+  const cards = document.querySelectorAll('#contentVicios .add-habit-card');
+  const emptyState = document.getElementById('emptyStateVicios');
+  
+  if (!vicios || vicios.length === 0) {
+    exibirEstadoVazio('vicios');
+    return;
+  }
+  
+  emptyState.style.display = 'none';
+  
+  // Resetar cards
+  cards.forEach((card, index) => {
+    card.innerHTML = `<i>🚫</i><span>Adicione seu vício</span>`;
+    card.onclick = () => abrirModalParaCard(index, 'vicio');
+    card.style.cursor = 'pointer';
+    card.classList.remove('habit-card-filled', 'vicio-card-filled');
+  });
+  
+  // Preencher com vícios existentes
+  vicios.forEach((vicio, index) => {
+    if (index < cards.length) {
+      const card = cards[index];
+      card.innerHTML = `
+        <div class="habit-card-content">
+          <h3>${vicio.nome_habito}</h3>
+          ${vicio.descricao ? `<p class="habit-description">${vicio.descricao}</p>` : ''}
+          <div class="streak-info current-streak">📅 Sequência atual: ${vicio.sequencia_atual || 0} dias</div>
+          <div class="streak-info best-streak">🏆 Melhor sequência: ${vicio.melhor_sequencia || 0} dias</div>
+          <div class="streak-info total-days">📊 Total controlado: ${vicio.total_dias || 0} dias</div>
+          <div class="habit-card-actions">
+            <button class="ceder-btn" onclick="cederAoVicio('${vicio._id}', event)">🚫 Ceder hoje</button>
+            <button class="controlado-btn" onclick="controlarVicio('${vicio._id}', event)">✅ Controlado hoje</button>
+            <button class="icon-btn small-btn" title="Editar" onclick="editarItemCard('${vicio._id}', 'vicio', event)">✏️</button>
+            <button class="icon-btn small-btn" title="Excluir" onclick="deletarItemCard('${vicio._id}', 'vicio', event)">🗑️</button>
+          </div>
+        </div>
+      `;
+      card.onclick = null;
+      card.style.cursor = 'default';
+      card.classList.add('habit-card-filled', 'vicio-card-filled');
+    }
+  });
+}
+
+function exibirEstadoVazio(tipo) {
+  const emptyState = document.getElementById(`emptyState${tipo === 'habitos' ? 'Habitos' : 'Vicios'}`);
+  emptyState.style.display = 'block';
+}
+
+// ========== FUNÇÕES COMPARTILHADAS ==========
+
+function abrirModalParaCard(index, tipo) {
+  editandoHabitoId = null;
+  const modalTitle = document.getElementById('modalHabitTitle');
+  
+  modalTitle.textContent = tipo === 'vicio' ? 'Adicionar Novo Vício' : 'Adicionar Novo Hábito';
+  document.getElementById('habitType').value = tipo;
   document.getElementById('addHabitModal').classList.add('active');
   document.getElementById('habitName').value = '';
   document.getElementById('habitDescription').value = '';
   
-  // Configurar botão para modo de adição
   configurarBotaoSalvar();
 }
 
-// Editar hábito a partir do card
-async function editarHabitoCard(habitoId, event) {
-  event.stopPropagation(); // Impedir que clique propague para o card
+async function editarItemCard(itemId, tipo, event) {
+  event.stopPropagation();
   
   try {
-    const resposta = await fazerRequisicaoAutenticada(API_URL + '/habito');
+    const nomeUsuario = localStorage.getItem('nome_usuario');
+    const endpoint = tipo === 'vicio' ? '/vicio' : '/habito';
+    const resposta = await fetch(API_URL + endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        nome_usuario: nomeUsuario
+      })
+    });
+    
     if (resposta.ok) {
-      const habitos = await resposta.json();
-      const habito = habitos.find(h => h._id === habitoId);
+      const items = await resposta.json();
+      const item = items.find(h => h._id === itemId);
       
-      if (habito) {
-        editandoHabitoId = habitoId; // Modo de edição
+      if (item) {
+        editandoHabitoId = itemId;
+        const modalTitle = document.getElementById('modalHabitTitle');
         
-        document.getElementById('habitName').value = habito.nome_habito;
-        document.getElementById('habitDescription').value = habito.descricao || '';
+        modalTitle.textContent = tipo === 'vicio' ? 'Editar Vício' : 'Editar Hábito';
+        document.getElementById('habitName').value = item.nome_habito;
+        document.getElementById('habitDescription').value = item.descricao || '';
+        document.getElementById('habitType').value = tipo;
         
-        // Configurar modal para edição
-        const modal = document.getElementById('addHabitModal');
-        const saveBtn = document.getElementById('saveHabit');
-        
-        saveBtn.textContent = 'Atualizar';
-        modal.classList.add('active');
+        configurarBotaoSalvar();
+        document.getElementById('addHabitModal').classList.add('active');
       }
     }
   } catch (erro) {
     console.error(erro);
-    alert('Erro ao carregar hábito para edição');
+    alert('Erro ao carregar item para edição');
   }
 }
 
 function configurarBotaoSalvar() {
   const saveBtn = document.getElementById('saveHabit');
-  
-  if (editandoHabitoId) {
-    saveBtn.textContent = 'Atualizar';
-  } else {
-    saveBtn.textContent = 'Salvar';
-  }
+  saveBtn.textContent = editandoHabitoId ? 'Atualizar' : 'Salvar';
 }
 
-// Adicionar/Editar hábito - MODIFICADO: Verificar se está editando ou adicionando
+// Adicionar/Editar item - CORRIGIDA
 async function adicionarHabito() {
   const nomeHabito = document.getElementById('habitName').value;
   const descricao = document.getElementById('habitDescription').value;
+  const tipo = document.getElementById('habitType').value;
+  const nomeUsuario = localStorage.getItem('nome_usuario');
 
   if (!nomeHabito.trim()) {
-    alert('Por favor, insira um nome para o hábito.');
+    alert('Por favor, insira um nome.');
     return;
   }
 
   try {
-    // Se está editando, chama a função de edição
+    // Se está editando
     if (editandoHabitoId) {
-      await editarHabito(editandoHabitoId);
+      await editarItem(editandoHabitoId, tipo);
       return;
     }
 
-    // Se não está editando, é uma adição normal
-    // Verificar se já atingiu o limite de 3 hábitos
-    const resposta = await fazerRequisicaoAutenticada(API_URL + '/habito');
+    // Verificar limite
+    const endpoint = tipo === 'vicio' ? '/vicio' : '/habito';
+    const resposta = await fetch(API_URL + endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        nome_usuario: nomeUsuario
+      })
+    });
+    
     if (resposta.ok) {
-      const habitosExistentes = await resposta.json();
-      if (habitosExistentes.length >= 3) {
-        alert('Limite máximo de 3 hábitos atingido!');
+      const itemsExistentes = await resposta.json();
+      if (itemsExistentes.length >= 3) {
+        alert(`Limite máximo de 3 ${tipo === 'vicio' ? 'vícios' : 'hábitos'} atingido!`);
         fecharModalHabito();
         return;
       }
     }
 
-    const respostaCriar = await fazerRequisicaoAutenticada(API_URL + '/habito/create', {
+    const createEndpoint = tipo === 'vicio' ? '/vicio/create' : '/habito/create';
+    const respostaCriar = await fetch(API_URL + createEndpoint, {
       method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({
+        nome_usuario: nomeUsuario,
         nome_habito: nomeHabito,
         descricao: descricao
       })
@@ -319,30 +326,36 @@ async function adicionarHabito() {
       throw new Error(erro.message);
     }
 
-    alert('Hábito criado com sucesso!');
+    alert(`${tipo === 'vicio' ? 'Vício' : 'Hábito'} criado com sucesso!`);
     fecharModalHabito();
-    carregarHabitos();
+    
+    // Recarrega a tab atual
+    if (currentTab === 'habitos') {
+      carregarHabitos();
+    } else {
+      carregarVicios();
+    }
     
   } catch (erro) {
     console.error(erro);
-    alert('Erro ao criar hábito: ' + erro.message);
+    alert(`Erro ao criar ${tipo === 'vicio' ? 'vício' : 'hábito'}: ${erro.message}`);
   }
 }
 
-
-// Função para editar hábito
-async function editarHabito(habitoId) {
+// Função para editar item - CORRIGIDA
+async function editarItem(itemId, tipo) {
   const nomeHabito = document.getElementById('habitName').value;
   const descricao = document.getElementById('habitDescription').value;
   const nomeUsuario = localStorage.getItem('nome_usuario');
 
   if (!nomeHabito.trim()) {
-    alert('Por favor, insira um nome para o hábito.');
+    alert('Por favor, insira um nome.');
     return;
   }
 
   try {
-    const resposta = await fetch(API_URL + `/habito/${habitoId}`, {
+    const endpoint = tipo === 'vicio' ? '/vicio' : '/habito';
+    const resposta = await fetch(API_URL + `${endpoint}/${itemId}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json'
@@ -359,79 +372,129 @@ async function editarHabito(habitoId) {
       throw new Error(erro.message);
     }
 
-    alert('Hábito atualizado com sucesso!');
+    alert(`${tipo === 'vicio' ? 'Vício' : 'Hábito'} atualizado com sucesso!`);
     fecharModalHabito();
-    carregarHabitos();
+    
+    // Recarrega a tab atual
+    if (currentTab === 'habitos') {
+      carregarHabitos();
+    } else {
+      carregarVicios();
+    }
     
   } catch (erro) {
     console.error(erro);
-    alert('Erro ao editar hábito: ' + erro.message);
+    alert(`Erro ao editar ${tipo === 'vicio' ? 'vício' : 'hábito'}: ${erro.message}`);
   }
 }
 
-// Fechar modal - MODIFICADO: Limpar estado de edição
-function fecharModalHabito() {
-  document.getElementById('addHabitModal').classList.remove('active');
-  document.getElementById('habitName').value = '';
-  document.getElementById('habitDescription').value = '';
+// Deletar item - CORRIGIDA
+async function deletarItemCard(itemId, tipo, event) {
+  event.stopPropagation();
   
-  // Limpar estado de edição
-  editandoHabitoId = null;
-  
-  // Reconfigurar botão para modo padrão (adição)
-  configurarBotaoSalvar();
-}
+  if (!confirm(`Tem certeza que deseja excluir este ${tipo === 'vicio' ? 'vício' : 'hábito'}?`)) return;
 
-// Deletar hábito
-async function deletarHabito(habitoId) {
   try {
-    const token = localStorage.getItem('authToken');
-    let resposta;
-    
-    if (token) {
-      resposta = await fazerRequisicaoAutenticada(API_URL + `/habito/${habitoId}`, {
-        method: 'DELETE'
-      });
-    } else {
-      resposta = await fazerRequisicaoAutenticada(API_URL + '/habito/delete', {
-        method: 'DELETE',
-        body: JSON.stringify({
-          habito_id: habitoId
-        })
-      });
-    }
+    const nomeUsuario = localStorage.getItem('nome_usuario');
+    const endpoint = tipo === 'vicio' ? '/vicio/delete' : '/habito/delete';
+    const resposta = await fetch(API_URL + endpoint, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        nome_usuario: nomeUsuario,
+        habito_id: itemId
+      })
+    });
 
     if (!resposta.ok) {
       const erro = await resposta.json();
       throw new Error(erro.message);
     }
 
-    // Se estava editando o hábito que foi deletado, limpar estado
-    if (editandoHabitoId === habitoId) {
-      editandoHabitoId = null;
-    }
-
-    alert('Hábito excluído com sucesso!');
-    carregarHabitos();
+    alert(`${tipo === 'vicio' ? 'Vício' : 'Hábito'} excluído com sucesso!`);
     
-  } catch (erro) {
-    throw erro;
-  }
-}
-
-// Deletar hábito a partir do card
-async function deletarHabitoCard(habitoId, event) {
-  event.stopPropagation(); // Impedir que clique propague para o card
-  
-  if (!confirm('Tem certeza que deseja excluir este hábito?')) return;
-
-  try {
-    await deletarHabito(habitoId);
+    if (currentTab === 'habitos') {
+      carregarHabitos();
+    } else {
+      carregarVicios();
+    }
   } catch (erro) {
     console.error(erro);
-    alert('Erro ao excluir hábito: ' + erro.message);
+    alert(`Erro ao excluir ${tipo === 'vicio' ? 'vício' : 'hábito'}: ${erro.message}`);
   }
 }
+
+// Ceder ao vício - CORRIGIDA
+async function cederAoVicio(vicioId, event) {
+  event.stopPropagation();
+  
+  if (!confirm('Deseja marcar que cedeu ao vício hoje? Isso reiniciará sua sequência.')) return;
+  
+  try {
+    const nomeUsuario = localStorage.getItem('nome_usuario');
+    const resposta = await fetch(API_URL + `/vicio/${vicioId}/ceder`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        nome_usuario: nomeUsuario
+      })
+    });
+
+    if (!resposta.ok) {
+      const erro = await resposta.json();
+      throw new Error(erro.message);
+    }
+
+    alert('Registrado! Amanhã é um novo dia para recomeçar! 💪');
+    carregarVicios();
+  } catch (erro) {
+    console.error(erro);
+    alert('Erro ao registrar: ' + erro.message);
+  }
+}
+
+// Controlar vício - CORRIGIDA
+async function controlarVicio(vicioId, event) {
+  event.stopPropagation();
+  
+  try {
+    const nomeUsuario = localStorage.getItem('nome_usuario');
+    const resposta = await fetch(API_URL + `/vicio/${vicioId}/controlado`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        nome_usuario: nomeUsuario
+      })
+    });
+
+    if (!resposta.ok) {
+      const erro = await resposta.json();
+      throw new Error(erro.message);
+    }
+
+    alert('Parabéns! Mais um dia sem ceder ao vício! 🎉');
+    carregarVicios();
+  } catch (erro) {
+    console.error(erro);
+    alert('Erro ao registrar: ' + erro.message);
+  }
+}
+
+function fecharModalHabito() {
+  document.getElementById('addHabitModal').classList.remove('active');
+  document.getElementById('habitName').value = '';
+  document.getElementById('habitDescription').value = '';
+  editandoHabitoId = null;
+  configurarBotaoSalvar();
+}
+
+// ========== FUNÇÕES EXISTENTES ==========
 
 // Modal de configurações
 function abrirModalConfiguracoes() {
@@ -443,7 +506,7 @@ function fecharModalConfiguracoes() {
   document.getElementById('settingsModal').classList.remove('active');
 }
 
-// Trocar senha - MODIFICADO: Suporte a ambos os métodos
+// Trocar senha - CORRIGIDA
 async function trocarSenha() {
   const senhaAntiga = prompt('Digite sua senha atual:');
   const senhaNova = prompt('Digite sua nova senha:');
@@ -451,31 +514,16 @@ async function trocarSenha() {
   if (!senhaAntiga || !senhaNova) return;
   
   try {
-    const token = localStorage.getItem('authToken');
-    let resposta;
-    
-    if (token) {
-      // Tentar com JWT (sem nome_usuario no body)
-      resposta = await fazerRequisicaoAutenticada(API_URL + '/usuario/trocarSenha', {
-        method: 'PUT',
-        body: JSON.stringify({
-          senha_antiga: senhaAntiga,
-          senha_nova: senhaNova
-        })
-      });
-    } else {
-      // Fallback para método antigo (com nome_usuario no body)
-      const nomeUsuario = localStorage.getItem('nome_usuario');
-      resposta = await fetch(API_URL + '/usuario/trocarSenha', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          nome_usuario: nomeUsuario,
-          senha_antiga: senhaAntiga,
-          senha_nova: senhaNova
-        })
-      });
-    }
+    const nomeUsuario = localStorage.getItem('nome_usuario');
+    const resposta = await fetch(API_URL + '/usuario/trocarSenha', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nome_usuario: nomeUsuario,
+        senha_antiga: senhaAntiga,
+        senha_nova: senhaNova
+      })
+    });
 
     if (!resposta.ok) {
       const erro = await resposta.json();
@@ -490,30 +538,19 @@ async function trocarSenha() {
   }
 }
 
-// Deletar conta - MODIFICADO: Suporte a ambos os métodos
+// Deletar conta - CORRIGIDA
 async function deletarConta() {
   if (!confirm('Tem certeza que deseja deletar sua conta? Esta ação não pode ser desfeita.')) return;
 
   try {
-    const token = localStorage.getItem('authToken');
-    let resposta;
-    
-    if (token) {
-      // Tentar com JWT (sem body)
-      resposta = await fazerRequisicaoAutenticada(API_URL + '/usuario/delete', {
-        method: 'DELETE'
-      });
-    } else {
-      // Fallback para método antigo (com nome_usuario no body)
-      const nomeUsuario = localStorage.getItem('nome_usuario');
-      resposta = await fetch(API_URL + '/usuario/delete', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          nome_usuario: nomeUsuario
-        })
-      });
-    }
+    const nomeUsuario = localStorage.getItem('nome_usuario');
+    const resposta = await fetch(API_URL + '/usuario/delete', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nome_usuario: nomeUsuario
+      })
+    });
 
     if (!resposta.ok) {
       const erro = await resposta.json();
@@ -530,13 +567,11 @@ async function deletarConta() {
   }
 }
 
-// Logout - MODIFICADO: Suporte a ambos os métodos
+// Logout
 async function logout() {
   try {
     const token = localStorage.getItem('authToken');
-    
     if (token) {
-      // Tentar logout com JWT
       await fetch(API_URL + '/usuario/logout', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
@@ -574,44 +609,38 @@ function setupPerfil() {
   });
 }
 
-// Setup dos cards de adicionar hábito
+// Setup dos cards
 function setupCardsHabitos() {
-  const cards = document.querySelectorAll('.add-habit-card');
-  cards.forEach((card, index) => {
-    card.addEventListener('click', () => abrirModalHabitoParaCard(index));
+  const habitCards = document.querySelectorAll('#contentHabitos .add-habit-card');
+  const vicioCards = document.querySelectorAll('#contentVicios .add-habit-card');
+  
+  habitCards.forEach((card, index) => {
+    card.addEventListener('click', () => abrirModalParaCard(index, 'habito'));
+  });
+  
+  vicioCards.forEach((card, index) => {
+    card.addEventListener('click', () => abrirModalParaCard(index, 'vicio'));
   });
 }
 
 // Fechar modais ao clicar fora
 function setupModais() {
   window.addEventListener('click', (e) => {
-    if (e.target.id === 'addHabitModal') {
-      fecharModalHabito();
-    }
-    if (e.target.id === 'settingsModal') {
-      fecharModalConfiguracoes();
-    }
+    if (e.target.id === 'addHabitModal') fecharModalHabito();
+    if (e.target.id === 'settingsModal') fecharModalConfiguracoes();
   });
 
-  // Fechar com botões
   document.getElementById('closeAddHabitModal').addEventListener('click', fecharModalHabito);
   document.getElementById('cancelAddHabit').addEventListener('click', fecharModalHabito);
   document.getElementById('closeSettingsModal').addEventListener('click', fecharModalConfiguracoes);
   
-  // Adicionar event listener padrão para o botão salvar
   document.getElementById('saveHabit').addEventListener('click', function() {
-    if (editandoHabitoId) {
-      editarHabito(editandoHabitoId);
-    } else {
-      adicionarHabito();
-    }
+    adicionarHabito();
   });
   
-  // Configurações
   document.getElementById('changePassword').addEventListener('click', trocarSenha);
   document.getElementById('deleteAccount').addEventListener('click', deletarConta);
 }
-
 
 // Inicialização
 window.onload = async () => {
