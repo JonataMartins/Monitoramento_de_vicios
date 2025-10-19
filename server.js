@@ -6,6 +6,7 @@ const swaggerUi = require('swagger-ui-express');
 const connectDB = require('./public/backend/config/database');
 const usuarioRoutes = require('./public/backend/routes/usuario');
 const habitoRoutes = require('./public/backend/routes/habito');
+const vicioRoutes = require('./public/backend/routes/vicio');
 
 require('dotenv').config();
 
@@ -21,7 +22,6 @@ app.use(express.static(path.join(__dirname, 'public/frontend')));
 app.get('/api/config', (req, res) => {
   res.json({ apiUrl: process.env.API_URL });
 });
-
 
 // Swagger
 const swaggerOptions = {
@@ -45,13 +45,15 @@ const swaggerOptions = {
       bearerAuth: []
     }]
   },
-  apis: ['./public/backend/routes/*.js'], // Atualizado para pegar todos os arquivos
+  apis: ['./public/backend/routes/*.js'],
 };
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerJsdoc(swaggerOptions)));
 
 // Rotas
 app.use('/usuario', usuarioRoutes);
 app.use('/habito', habitoRoutes);
+app.use('/vicio', vicioRoutes); 
+
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
 // Iniciar servidor
