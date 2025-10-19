@@ -27,9 +27,10 @@ body {
   justify-content: center;
   align-items: center;
   padding: 20px;
+  position: relative;
 }
 
-/* Container Principal */
+/* Container Principal - Z-INDEX BAIXO */
 .container {
   width: 100%;
   max-width: 400px;
@@ -38,6 +39,8 @@ body {
   box-shadow: var(--shadow);
   overflow: hidden;
   animation: fadeIn 0.5s ease-out;
+  position: relative;
+  z-index: 1; /* BAIXO - para ficar ABAIXO dos botões */
 }
 
 @keyframes fadeIn {
@@ -220,6 +223,8 @@ body {
   transition: all 0.3s;
   padding: 5px;
   border-radius: 5px;
+  position: relative;
+  z-index: 100; /* ALTO - para ficar acima */
 }
 
 .icon-btn:hover {
@@ -239,7 +244,7 @@ body {
   opacity: 0.7;
 }
 
-/* Header da página de hábitos */
+/* Header da página de hábitos - CORRIGIDO */
 .habits-header {
   background: var(--primary);
   color: white;
@@ -248,7 +253,8 @@ body {
   justify-content: space-between;
   align-items: center;
   position: relative;
-  overflow: hidden;
+  overflow: visible; /* MUDADO: de hidden para visible */
+  z-index: 1000; /* ALTO - para ficar acima do container */
 }
 
 .habits-header::before {
@@ -269,9 +275,10 @@ body {
   z-index: 1;
 }
 
+/* Menu de perfil - CORRIGIDO */
 .profile-menu {
   position: relative;
-  z-index: 1;
+  z-index: 1100; /* MAIS ALTO AINDA */
 }
 
 .profile-info {
@@ -283,7 +290,7 @@ body {
   border-radius: 10px;
   box-shadow: var(--shadow);
   min-width: 150px;
-  z-index: 100;
+  z-index: 1200; /* O MAIS ALTO DE TODOS */
   overflow: hidden;
 }
 
@@ -307,6 +314,25 @@ body {
 .profile-item:hover {
   background: var(--gray-light);
   color: var(--primary);
+}
+
+/* Botão de perfil específico */
+#profileBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 20px;
+  color: white;
+  padding: 8px;
+  border-radius: 50%;
+  transition: all 0.3s;
+  z-index: 1100;
+  position: relative;
+}
+
+#profileBtn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.1);
 }
 
 /* Cards para adicionar hábitos */
@@ -438,7 +464,7 @@ body {
   width: 100%;
   height: 100%;
   background: rgba(0, 0, 0, 0.5);
-  z-index: 1000;
+  z-index: 2000; /* MUITO ALTO - para modais */
   justify-content: center;
   align-items: center;
   animation: fadeIn 0.3s ease-out;
@@ -457,6 +483,8 @@ body {
   box-shadow: var(--shadow);
   animation: slideUp 0.3s ease-out;
   overflow: hidden;
+  position: relative;
+  z-index: 2001;
 }
 
 @keyframes slideUp {
@@ -593,6 +621,116 @@ body {
 .btn-danger:hover {
   background: #dc2626;
   transform: translateY(-2px);
+}
+
+/* Abas - CORRIGIDO */
+.tabs-container {
+  display: flex;
+  margin-bottom: 0;
+  border-bottom: 2px solid #e0e0e0;
+  position: relative;
+  z-index: 1000; /* ALTO */
+}
+
+.tab {
+  padding: 12px 24px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 16px;
+  border-bottom: 3px solid transparent;
+  transition: all 0.3s ease;
+  flex: 1;
+  text-align: center;
+  position: relative;
+  z-index: 1000; /* ALTO */
+}
+
+.tab.active {
+  border-bottom-color: #4CAF50;
+  color: #4CAF50;
+  font-weight: bold;
+}
+
+.tab-vicio.active {
+  border-bottom-color: #f44336;
+  color: #f44336;
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+/* Cards de vícios */
+.vicio-card {
+  border-left-color: #f44336 !important;
+}
+
+.vicio-card-filled {
+  background: linear-gradient(135deg, #ffebee, #ffffff) !important;
+}
+
+/* Botão de ceder ao vício */
+.ceder-btn {
+  background-color: #f44336;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  margin: 5px;
+  position: relative;
+  z-index: 100;
+}
+
+.ceder-btn:hover {
+  background-color: #d32f2f;
+  transform: translateY(-2px);
+}
+
+.controlado-btn {
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 14px;
+  margin: 5px;
+  position: relative;
+  z-index: 100;
+}
+
+/* Informações de sequência */
+.streak-info {
+  margin: 5px 0;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: bold;
+  position: relative;
+  z-index: 100;
+}
+
+.current-streak {
+  background: #ffebee;
+  color: #d32f2f;
+}
+
+.best-streak {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.total-days {
+  background: #f3e5f5;
+  color: #7b1fa2;
 }
 
 /* Responsividade */
