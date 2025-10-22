@@ -17,11 +17,10 @@ async function carregarAPIConfig() {
   } catch (erro) {
     console.error('Erro ao carregar a configuração da API:', erro);
     // Fallback para URL padrão
-    API_URL = 'http://localhost:3000';
-    await carregarHabitos();
-    setupPerfil();
-    setupCardsHabitos();
-    setupModais();
+    // await carregarHabitos();
+    // setupPerfil();
+    // setupCardsHabitos();
+    // setupModais();
   }
 }
 
