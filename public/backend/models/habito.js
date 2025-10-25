@@ -18,9 +18,9 @@ const habitoSchema = new mongoose.Schema({
     type: Boolean,
     required: true
   },
-  sequencia_atual: {
-    type: Number,
-    default: 0
+  ultimo_marco: {
+    type: Date,
+    default: Date.now
   },
   sequencia_melhor: {
     type: Number,
