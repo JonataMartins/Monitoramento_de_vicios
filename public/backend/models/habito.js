@@ -14,6 +14,22 @@ const habitoSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  tipo:{ // 0 para habitos ruins(vícios) e 1 para habitos bons
+    type: Boolean,
+    required: true
+  },
+  sequencia_atual: {
+    type: Number,
+    default: 0
+  },
+  sequencia_melhor: {
+    type: Number,
+    default: 0
+  },
+  sequencia_media: {
+    type: Number,
+    default: 0
+  },
   data_criacao: {
     type: Date,
     default: Date.now
