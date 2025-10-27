@@ -34,7 +34,7 @@ loginForm.addEventListener("submit", async function (e) {
         // Caso não haja token, usar a abordagem antiga
         localStorage.setItem('nome_usuario', nome_usuario);
         alert('Login bem-sucedido!');
-        window.location.href = 'lista-habitos.html';
+        window.location.href = 'habitos.html';
       }
     } else {
       alert(result.message);
