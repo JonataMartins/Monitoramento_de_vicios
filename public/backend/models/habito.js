@@ -33,6 +33,19 @@ const habitoSchema = new mongoose.Schema({
   data_criacao: {
     type: Date,
     default: Date.now
+  },
+  //adicionando aki aaaaaaaaaaaaaaaaaaa
+  recaidas: {
+    type: Number,
+    default: 0
+  },
+  maior_periodo_sem_vicio: {
+    type: Number,
+    default: 0
+  },
+  inicio: {
+    type: Date,
+    default: Date.now
   }
 });
 
