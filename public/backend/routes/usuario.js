@@ -42,6 +42,94 @@ const verificarToken = async (req, res, next) => {
   }
 };
 
+router.post('/create', async (req, res) => {
+  const { nome_usuario, senha } = req.body;
+
+  try {
+    const usuarioExistente = await Usuario.findOne({ nome_usuario });
+    if (usuarioExistente) {
+      return res.status(400).json({ message: 'Usuário já existe!' });
+    }
+
+    const senhaCriptografada = hashSenha(senha);
+    const novoUsuario = new Usuario({ nome_usuario, senha: senhaCriptografada });
+    await novoUsuario.save();
+
+    res.status(201).json({ message: 'Usuário criado com sucesso!' });
+  } catch (err) {
+    console.error("Erro ao criar usuário:", err);
+    res.status(500).json({ message: 'Erro ao criar usuário!' });
+  }
+});
+
+router.post('/login', async (req, res) => {
+  const { nome_usuario, senha } = req.body;
+
+  try {
+    const usuario = await Usuario.findOne({ nome_usuario });
+    if (!usuario) {
+      return res.status(404).json({ message: 'Usuário não encontrado' });
+    }
+
+    const senhaCriptografada = hashSenha(senha);
+
+    if (usuario.senha !== senhaCriptografada) {
+      return res.status(400).json({ message: 'Senha incorreta' });
+    }
+
+    res.status(200).json({ message: 'Login bem-sucedido', usuario });
+  } catch (err) {
+    console.error("Erro ao fazer login:", err);
+    res.status(500).json({ message: 'Erro ao fazer login!' });
+  }
+});
+
+router.put('/trocarSenha', async (req, res) => {
+  const { nome_usuario, senha_antiga, senha_nova } = req.body;
+
+  try {
+    const usuario = await Usuario.findOne({ nome_usuario });
+    if (!usuario) {
+      return res.status(404).json({ message: 'Usuário não encontrado' });
+    }
+
+    const senhaAntigaCriptografada = hashSenha(senha_antiga);
+
+    if (usuario.senha !== senhaAntigaCriptografada) {
+      return res.status(400).json({ message: 'Senha antiga incorreta' });
+    }
+
+    const senhaNovaCriptografada = hashSenha(senha_nova);
+    usuario.senha = senhaNovaCriptografada;
+    await usuario.save();
+
+    res.status(200).json({ message: 'Senha alterada com sucesso!' });
+  } catch (err) {
+    console.error("Erro ao mudar a senha:", err);
+    res.status(500).json({ message: 'Erro ao mudar a senha!' });
+  }
+});
+
+router.delete('/delete', async (req, res) => {
+  const { nome_usuario } = req.body;
+
+  try {
+    const usuario = await Usuario.findOne({ nome_usuario });
+    if (!usuario) {
+      return res.status(404).json({ message: 'Usuário não encontrado' });
+    }
+
+    await Usuario.deleteOne({ nome_usuario });
+
+    res.status(200).json({ message: 'Usuário excluído com sucesso!' });
+  } catch (err) {
+    console.error("Erro ao excluir o usuário:", err);
+    res.status(500).json({ message: 'Erro ao excluir o usuário!' });
+  }
+});
+
+module.exports = router;
+
 // **Rota para Criar Usuário**
 /**
  * @swagger
@@ -72,25 +160,6 @@ const verificarToken = async (req, res, next) => {
  *       500:
  *         description: Erro interno do servidor
  */
-router.post('/create', async (req, res) => {
-  const { nome_usuario, senha } = req.body;
-
-  try {
-    const usuarioExistente = await Usuario.findOne({ nome_usuario });
-    if (usuarioExistente) {
-      return res.status(400).json({ message: 'Usuário já existe!' });
-    }
-
-    const senhaCriptografada = hashSenha(senha);
-    const novoUsuario = new Usuario({ nome_usuario, senha: senhaCriptografada });
-    await novoUsuario.save();
-
-    res.status(201).json({ message: 'Usuário criado com sucesso!' });
-  } catch (err) {
-    console.error("Erro ao criar usuário:", err);
-    res.status(500).json({ message: 'Erro ao criar usuário!' });
-  }
-});
 
 // **Rota de Login**
 /**
@@ -124,27 +193,6 @@ router.post('/create', async (req, res) => {
  *       500:
  *         description: Erro interno do servidor
  */
-router.post('/login', async (req, res) => {
-  const { nome_usuario, senha } = req.body;
-
-  try {
-    const usuario = await Usuario.findOne({ nome_usuario });
-    if (!usuario) {
-      return res.status(404).json({ message: 'Usuário não encontrado' });
-    }
-
-    const senhaCriptografada = hashSenha(senha);
-
-    if (usuario.senha !== senhaCriptografada) {
-      return res.status(400).json({ message: 'Senha incorreta' });
-    }
-
-    res.status(200).json({ message: 'Login bem-sucedido', usuario });
-  } catch (err) {
-    console.error("Erro ao fazer login:", err);
-    res.status(500).json({ message: 'Erro ao fazer login!' });
-  }
-});
 
 // **Rota para Mudar a Senha**
 /**
@@ -182,31 +230,7 @@ router.post('/login', async (req, res) => {
  *       500:
  *         description: Erro interno do servidor
  */
-router.put('/trocarSenha', async (req, res) => {
-  const { nome_usuario, senha_antiga, senha_nova } = req.body;
 
-  try {
-    const usuario = await Usuario.findOne({ nome_usuario });
-    if (!usuario) {
-      return res.status(404).json({ message: 'Usuário não encontrado' });
-    }
-
-    const senhaAntigaCriptografada = hashSenha(senha_antiga);
-
-    if (usuario.senha !== senhaAntigaCriptografada) {
-      return res.status(400).json({ message: 'Senha antiga incorreta' });
-    }
-
-    const senhaNovaCriptografada = hashSenha(senha_nova);
-    usuario.senha = senhaNovaCriptografada;
-    await usuario.save();
-
-    res.status(200).json({ message: 'Senha alterada com sucesso!' });
-  } catch (err) {
-    console.error("Erro ao mudar a senha:", err);
-    res.status(500).json({ message: 'Erro ao mudar a senha!' });
-  }
-});
 
 // **Rota para Excluir Usuário**
 /**
@@ -234,25 +258,3 @@ router.put('/trocarSenha', async (req, res) => {
  *       500:
  *         description: Erro interno do servidor
  */
-router.delete('/delete', async (req, res) => {
-  const { nome_usuario } = req.body;
-
-  try {
-    const usuario = await Usuario.findOne({ nome_usuario });
-    if (!usuario) {
-      return res.status(404).json({ message: 'Usuário não encontrado' });
-    }
-
-    await Usuario.deleteOne({ nome_usuario });
-
-    res.status(200).json({ message: 'Usuário excluído com sucesso!' });
-  } catch (err) {
-    console.error("Erro ao excluir o usuário:", err);
-    res.status(500).json({ message: 'Erro ao excluir o usuário!' });
-  }
-});
-
-// **REMOVER AS ROTAS COM JWT POR ENQUANTO - vamos implementar gradualmente**
-// Manter apenas as rotas básicas que já funcionam
-
-module.exports = router;

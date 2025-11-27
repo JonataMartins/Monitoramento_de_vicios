@@ -7,12 +7,12 @@ loginForm.addEventListener("submit", async function (e) {
   const senha = document.getElementById("senha").value;
 
   try {
-    // Pega a URL da API
+    // Pega a URL da API (mantido)
     const configResponse = await fetch('/api/config');
     const config = await configResponse.json();
-    const API_URL = config.apiUrl; // Aqui você pega a URL da API
+    const API_URL = config.apiUrl;
 
-    // Faz a requisição para o login
+    // Faz a requisição para o login (mantido)
     const response = await fetch(API_URL + '/usuario/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -22,16 +22,17 @@ loginForm.addEventListener("submit", async function (e) {
     const result = await response.json();
 
     if (response.ok) {
-      // Verificar se o token existe antes de salvar
-      if (result.token) {
-        localStorage.setItem('authToken', result.token);
+
+      // Se o login foi bem-sucedido:
+      if (result.usuario) {
+
         localStorage.setItem('nome_usuario', result.usuario.nome_usuario);
         localStorage.setItem('user_id', result.usuario.id);
-        
+
         alert(result.message);
         window.location.href = 'habitos.html';
       } else {
-        // Caso não haja token, usar a abordagem antiga
+        // Caso o retorno seja inesperado, mas response.ok
         localStorage.setItem('nome_usuario', nome_usuario);
         alert('Login bem-sucedido!');
         window.location.href = 'habitos.html';
