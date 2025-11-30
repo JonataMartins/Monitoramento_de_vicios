@@ -6,7 +6,6 @@ const swaggerUi = require('swagger-ui-express');
 const connectDB = require('./public/backend/config/database');
 const usuarioRoutes = require('./public/backend/routes/usuario');
 const habitoRoutes = require('./public/backend/routes/habito');
-const vicioRoutes = require('./public/backend/routes/vicio');
 
 require('dotenv').config();
 
@@ -52,7 +51,6 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerJsdoc(swaggerOption
 // Rotas
 app.use('/usuario', usuarioRoutes);
 app.use('/habito', habitoRoutes);
-app.use('/vicio', vicioRoutes); 
 
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
