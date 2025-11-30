@@ -79,4 +79,11 @@ curl -sSL https://ngrok-agent.s3.amazonaws.com/ngrok.asc \
 && echo "deb https://ngrok-agent.s3.amazonaws.com bookworm main" \
 | sudo tee /etc/apt/sources.list.d/ngrok.list \
 && sudo apt update \
-&& sudo apt install ngrok
+&& sudo apt install ngrok 
+```
+
+### Teste de unitade e integração
+```bash
+   npx mocha public/backend/routes/habito.test.js
+   npx mocha public/backend/routes/usuario.test.js
+   npx mocha public/backend/routes/integration.test.js 
