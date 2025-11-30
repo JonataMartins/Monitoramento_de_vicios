@@ -225,6 +225,237 @@ router.delete('/delete', async (req, res) => {
   }
 });
 
-
-
 module.exports = router;
+
+// **Rota para Registrar Recaída**
+/**
+ * @swagger
+ * /habito/{id}/recaida:
+ *   put:
+ *     summary: Registra uma recaída no vício
+ *     description: Aumenta o contador de recaídas do vício do usuário
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         description: ID do hábito (vício)
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               nome_usuario:
+ *                 type: string
+ *                 description: Nome do usuário
+ *                 example: "joao123"
+ *     responses:
+ *       200:
+ *         description: Recaída registrada com sucesso
+ *       404:
+ *         description: Usuário ou vício não encontrado
+ *       500:
+ *         description: Erro interno do servidor
+ */
+
+// **Rota para Registrar Resistência**
+/**
+ * @swagger
+ * /habito/{id}/resistencia:
+ *   put:
+ *     summary: Registra resistência (um dia sem recaída)
+ *     description: Aumenta o contador de dias sem recaída
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         description: ID do hábito (vício)
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               nome_usuario:
+ *                 type: string
+ *                 description: Nome do usuário
+ *                 example: "joao123"
+ *     responses:
+ *       200:
+ *         description: Resistência registrada com sucesso
+ *       404:
+ *         description: Usuário ou vício não encontrado
+ *       500:
+ *         description: Erro interno do servidor
+ */
+
+// **Rota para Buscar Métricas do Vício**
+/**
+ * @swagger
+ * /habito/{id}/metricas:
+ *   get:
+ *     summary: Recupera as métricas de um vício
+ *     description: Retorna as métricas do vício, como dias sem recaída, maior período, entre outras.
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         description: ID do hábito (vício)
+ *         schema:
+ *           type: string
+ *       - name: nome_usuario
+ *         in: query
+ *         required: true
+ *         description: Nome do usuário
+ *         schema:
+ *           type: string
+ *           example: "joao123"
+ *     responses:
+ *       200:
+ *         description: Métricas recuperadas com sucesso
+ *       404:
+ *         description: Usuário ou vício não encontrado
+ *       500:
+ *         description: Erro interno do servidor
+ */
+
+// **Rota para Criar Hábito**
+/**
+ * @swagger
+ * /habito/create:
+ *   post:
+ *     summary: Cria um novo hábito
+ *     description: Cria um novo hábito para o usuário
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               nome_usuario:
+ *                 type: string
+ *                 description: Nome do usuário
+ *                 example: "joao123"
+ *               nome_habito:
+ *                 type: string
+ *                 description: Nome do hábito (vício)
+ *                 example: "tabagismo"
+ *               descricao:
+ *                 type: string
+ *                 description: Descrição do hábito
+ *                 example: "Fumar cigarro"
+ *     responses:
+ *       201:
+ *         description: Hábito criado com sucesso
+ *       404:
+ *         description: Usuário não encontrado
+ *       500:
+ *         description: Erro interno do servidor
+ */
+
+// **Rota para Listar Hábitos do Usuário**
+/**
+ * @swagger
+ * /habito:
+ *   post:
+ *     summary: Lista todos os hábitos de um usuário
+ *     description: Retorna todos os hábitos registrados para um usuário
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               nome_usuario:
+ *                 type: string
+ *                 description: Nome do usuário
+ *                 example: "joao123"
+ *     responses:
+ *       200:
+ *         description: Lista de hábitos recuperada com sucesso
+ *       404:
+ *         description: Usuário não encontrado
+ *       500:
+ *         description: Erro interno do servidor
+ */
+
+// **Rota para Editar Hábito**
+/**
+ * @swagger
+ * /habito/{id}:
+ *   put:
+ *     summary: Edita um hábito existente
+ *     description: Atualiza informações de um hábito, como nome ou descrição
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         description: ID do hábito (vício)
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               nome_usuario:
+ *                 type: string
+ *                 description: Nome do usuário
+ *                 example: "joao123"
+ *               nome_habito:
+ *                 type: string
+ *                 description: Novo nome do hábito
+ *                 example: "tabagismo"
+ *               descricao:
+ *                 type: string
+ *                 description: Nova descrição do hábito
+ *                 example: "Fumar cigarros regularmente"
+ *     responses:
+ *       200:
+ *         description: Hábito atualizado com sucesso
+ *       404:
+ *         description: Usuário ou vício não encontrado
+ *       500:
+ *         description: Erro interno do servidor
+ */
+
+// **Rota para Excluir Hábito**
+/**
+ * @swagger
+ * /habito/delete:
+ *   delete:
+ *     summary: Exclui um hábito do usuário
+ *     description: Deleta um hábito registrado para o usuário
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               nome_usuario:
+ *                 type: string
+ *                 description: Nome do usuário
+ *                 example: "joao123"
+ *               habito_id:
+ *                 type: string
+ *                 description: ID do hábito a ser deletado
+ *                 example: "5f50c31b9b5e9d23dce5e9ff"
+ *     responses:
+ *       200:
+ *         description: Hábito excluído com sucesso
+ *       404:
+ *         description: Usuário ou vício não encontrado
+ *       500:
+ *         description: Erro interno do servidor
+ */
