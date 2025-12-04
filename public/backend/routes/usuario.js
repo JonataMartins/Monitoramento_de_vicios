@@ -11,7 +11,6 @@ function hashSenha(senha) {
   return hash.digest('hex');
 }
 
-// **Middleware para verificar token - ADICIONAR ESTA FUNÇÃO**
 const verificarToken = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
@@ -20,10 +19,10 @@ const verificarToken = async (req, res, next) => {
     }
 
     const token = authHeader.split(' ')[1];
-    
+
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const usuario = await Usuario.findById(decoded.userId);
-    
+
     if (!usuario) {
       return res.status(401).json({ message: 'Usuário não encontrado' });
     }
@@ -77,22 +76,66 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ message: 'Senha incorreta' });
     }
 
-    res.status(200).json({ message: 'Login bem-sucedido', usuario });
+    // 1. Geração do JWT
+    const token = jwt.sign(
+      { userId: usuario._id, nome_usuario: usuario.nome_usuario },
+      process.env.JWT_SECRET,
+      { expiresIn: '1d' }
+    );
+
+    // 2. Salvar o Token no banco de dados
+    usuario.ultimo_token = token;
+    usuario.data_ultimo_login = new Date();
+    await usuario.save();
+
+    // 3. Responder com o Token
+    res.status(200).json({
+      message: 'Login bem-sucedido',
+      token,
+      usuario: {
+        id: usuario._id,
+        nome_usuario: usuario.nome_usuario
+      }
+    });
   } catch (err) {
     console.error("Erro ao fazer login:", err);
     res.status(500).json({ message: 'Erro ao fazer login!' });
   }
 });
 
-router.put('/trocarSenha', async (req, res) => {
-  const { nome_usuario, senha_antiga, senha_nova } = req.body;
+// --- NOVAS ROTAS PROTEGIDAS (Usando verificarToken e req.usuario) ---
+
+router.get('/verificar', verificarToken, (req, res) => {
+  res.status(200).json({
+    message: 'Token válido',
+    usuario: {
+      id: req.usuario._id,
+      nome_usuario: req.usuario.nome_usuario
+    }
+  });
+});
+
+// NOVO: Rota para logout (invalida o token no servidor)
+router.post('/logout', verificarToken, async (req, res) => {
+  const usuario = req.usuario;
 
   try {
-    const usuario = await Usuario.findOne({ nome_usuario });
-    if (!usuario) {
-      return res.status(404).json({ message: 'Usuário não encontrado' });
-    }
+    // Limpa o último token salvo para invalidar a sessão atual
+    usuario.ultimo_token = null;
+    await usuario.save();
 
+    res.status(200).json({ message: 'Logout bem-sucedido. Token invalidado no servidor.' });
+  } catch (err) {
+    console.error("Erro ao fazer logout:", err);
+    res.status(500).json({ message: 'Erro ao processar logout no servidor.' });
+  }
+});
+
+router.put('/trocarSenha', verificarToken, async (req, res) => {
+  const { senha_antiga, senha_nova } = req.body;
+  const usuario = req.usuario;
+
+  try {
     const senhaAntigaCriptografada = hashSenha(senha_antiga);
 
     if (usuario.senha !== senhaAntigaCriptografada) {
@@ -101,25 +144,34 @@ router.put('/trocarSenha', async (req, res) => {
 
     const senhaNovaCriptografada = hashSenha(senha_nova);
     usuario.senha = senhaNovaCriptografada;
+
+    // Gera um novo token, invalidando o antigo (força o cliente a usar o novo)
+    const novoToken = jwt.sign(
+      { userId: usuario._id, nome_usuario: usuario.nome_usuario },
+      process.env.JWT_SECRET,
+      { expiresIn: '1d' }
+    );
+
+    usuario.ultimo_token = novoToken;
     await usuario.save();
 
-    res.status(200).json({ message: 'Senha alterada com sucesso!' });
+    res.status(200).json({
+      message: 'Senha alterada com sucesso! Você pode usar o novo token.',
+      token: novoToken
+    });
   } catch (err) {
     console.error("Erro ao mudar a senha:", err);
     res.status(500).json({ message: 'Erro ao mudar a senha!' });
   }
 });
 
-router.delete('/delete', async (req, res) => {
-  const { nome_usuario } = req.body;
+router.delete('/delete', verificarToken, async (req, res) => {
+  // MUDANÇA: Usuário obtido via token
+  const usuario = req.usuario;
 
   try {
-    const usuario = await Usuario.findOne({ nome_usuario });
-    if (!usuario) {
-      return res.status(404).json({ message: 'Usuário não encontrado' });
-    }
-
-    await Usuario.deleteOne({ nome_usuario });
+    // Deleta o usuário baseado no ID obtido no token
+    await Usuario.deleteOne({ _id: usuario._id });
 
     res.status(200).json({ message: 'Usuário excluído com sucesso!' });
   } catch (err) {

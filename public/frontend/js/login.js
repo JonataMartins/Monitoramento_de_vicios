@@ -7,12 +7,10 @@ loginForm.addEventListener("submit", async function (e) {
   const senha = document.getElementById("senha").value;
 
   try {
-    // Pega a URL da API (mantido)
     const configResponse = await fetch('/api/config');
     const config = await configResponse.json();
     const API_URL = config.apiUrl;
 
-    // Faz a requisição para o login (mantido)
     const response = await fetch(API_URL + '/usuario/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -22,20 +20,17 @@ loginForm.addEventListener("submit", async function (e) {
     const result = await response.json();
 
     if (response.ok) {
-
-      // Se o login foi bem-sucedido:
-      if (result.usuario) {
-
+      
+      if (result.token && result.usuario) {
+        localStorage.setItem('jwt_token', result.token); 
+        
         localStorage.setItem('nome_usuario', result.usuario.nome_usuario);
         localStorage.setItem('user_id', result.usuario.id);
 
         alert(result.message);
         window.location.href = 'habitos.html';
       } else {
-        // Caso o retorno seja inesperado, mas response.ok
-        localStorage.setItem('nome_usuario', nome_usuario);
-        alert('Login bem-sucedido!');
-        window.location.href = 'habitos.html';
+        alert('Login bem-sucedido, mas o token não foi recebido.');
       }
     } else {
       alert(result.message);
