@@ -1,15 +1,31 @@
 import { setEditandoId } from './config.js';
 
+// --- Função Auxiliar de Tolerância a Falhas no DOM ---
+/**
+ * Anexa um event listener a um seletor dentro de um container,
+ * prevenindo falhas caso o elemento não exista.
+ */
+function safeAddListener(container, selector, handler) {
+  const element = container.querySelector(selector);
+  if (element) {
+    element.addEventListener('click', handler);
+  } else {
+    // Opcional: Adicionar um log de aviso para depuração
+    // console.warn(`Elemento com seletor '${selector}' não encontrado no container.`);
+  }
+}
+
 // --- Funções de Renderização ---
 
 export function renderHabitos(habitos, onEdit, onDelete) {
   const cards = document.querySelectorAll('#contentHabitos .add-habit-card');
   const emptyState = document.getElementById('emptyStateHabitos');
-  
+
   // Limpa os cards
   cards.forEach((card, index) => {
     card.innerHTML = `<i>📝</i><span>Adicione seu hábito</span>`;
-    card.onclick = () => onEdit(null, 'habito'); // null indica "novo"
+    // Usa onEdit apenas se for uma função válida
+    card.onclick = typeof onEdit === 'function' ? () => onEdit(null, 'habito') : null;
     card.style.cursor = 'pointer';
     card.classList.remove('habit-card-filled');
   });
@@ -18,35 +34,38 @@ export function renderHabitos(habitos, onEdit, onDelete) {
     emptyState.style.display = 'block';
     return;
   }
-  
+
   emptyState.style.display = 'none';
-  
+
   // Preenche
   habitos.forEach((habito, index) => {
     if (index < cards.length) {
       const card = cards[index];
       card.innerHTML = `
-        <div class="habit-card-content">
-          <h3>${habito.nome_habito}</h3>
-          ${habito.descricao ? `<p class="habit-description">${habito.descricao}</p>` : ''}
-          <div class="habit-card-actions">
-            <button class="icon-btn small-btn edit-btn" title="Editar">✏️</button>
-            <button class="icon-btn small-btn delete-btn" title="Excluir">🗑️</button>
-          </div>
-        </div>
-      `;
+        <div class="habit-card-content">
+          <h3>${habito.nome_habito}</h3>
+          ${habito.descricao ? `<p class="habit-description">${habito.descricao}</p>` : ''}
+          <div class="habit-card-actions">
+            <button class="icon-btn small-btn edit-btn" title="Editar">✏️</button>
+            <button class="icon-btn small-btn delete-btn" title="Excluir">🗑️</button>
+          </div>
+        </div>
+      `;
       card.onclick = null;
       card.style.cursor = 'default';
       card.classList.add('habit-card-filled');
-      
-      // Adiciona listeners em vez de onclick inline
-      card.querySelector('.edit-btn').addEventListener('click', (e) => {
-          e.stopPropagation();
-          onEdit(habito, 'habito'); // Passa o objeto habito
+
+      // Adiciona listeners usando a função segura
+      safeAddListener(card, '.edit-btn', (e) => {
+        e.stopPropagation();
+        // Garante que onEdit é uma função antes de chamar
+        if (typeof onEdit === 'function') onEdit(habito, 'habito');
       });
-      card.querySelector('.delete-btn').addEventListener('click', (e) => {
-          e.stopPropagation();
-          onDelete(habito._id, 'habito');
+
+      safeAddListener(card, '.delete-btn', (e) => {
+        e.stopPropagation();
+        // Garante que onDelete é uma função antes de chamar
+        if (typeof onDelete === 'function') onDelete(habito._id, 'habito');
       });
     }
   });
@@ -59,7 +78,8 @@ export function renderVicios(vicios, onCeder, onControlar, onEdit, onDelete) {
   // Limpa
   cards.forEach((card, index) => {
     card.innerHTML = `<i>🚫</i><span>Adicione seu vício</span>`;
-    card.onclick = () => onEdit(null, 'vicio'); // null indica "novo"
+    // Usa onEdit apenas se for uma função válida
+    card.onclick = typeof onEdit === 'function' ? () => onEdit(null, 'vicio') : null;
     card.style.cursor = 'pointer';
     card.classList.remove('habit-card-filled', 'vicio-card-filled');
   });
@@ -68,48 +88,52 @@ export function renderVicios(vicios, onCeder, onControlar, onEdit, onDelete) {
     emptyState.style.display = 'block';
     return;
   }
-  
+
   emptyState.style.display = 'none';
 
   // Preenche
   vicios.forEach((vicio, index) => {
     if (index < cards.length) {
       const card = cards[index];
+      // CORREÇÃO: Usando o template string original para preservar o CSS/Layout
       card.innerHTML = `
-        <div class="habit-card-content">
-          <h3>${vicio.nome_habito}</h3>
-          ${vicio.descricao ? `<p class="habit-description">${vicio.descricao}</p>` : ''}
-          <div class="streak-info current-streak">📅 Sequência atual: ${vicio.sequencia_atual || 0} dias</div>
-          <div class="streak-info best-streak">🏆 Melhor sequência: ${vicio.melhor_sequencia || 0} dias</div>
-          <div class="streak-info total-days">📊 Total controlado: ${vicio.total_dias || 0} dias</div>
-          <div class="habit-card-actions">
-            <button class="ceder-btn">🚫 Ceder hoje</button>
-            <button class="controlado-btn">✅ Controlado hoje</button>
-            <button class="icon-btn small-btn edit-btn" title="Editar">✏️</button>
-            <button class="icon-btn small-btn delete-btn" title="Excluir">🗑️</button>
-          </div>
-        </div>
-      `;
+        <div class="habit-card-content">
+          <h3>${vicio.nome_habito}</h3>
+          ${vicio.descricao ? `<p class="habit-description">${vicio.descricao}</p>` : ''}
+          <div class="streak-info current-streak">📅 Sequência atual: ${vicio.sequencia_atual || 0} dias</div>
+          <div class="streak-info best-streak">🏆 Melhor sequência: ${vicio.melhor_sequencia || 0} dias</div>
+          <div class="streak-info total-days">📊 Total controlado: ${vicio.total_dias || 0} dias</div>
+          <div class="habit-card-actions">
+            <button class="ceder-btn">🚫 Ceder hoje</button>
+            <button class="controlado-btn">✅ Controlado hoje</button>
+            <button class="icon-btn small-btn edit-btn" title="Editar">✏️</button>
+            <button class="icon-btn small-btn delete-btn" title="Excluir">🗑️</button>
+          </div>
+        </div>
+      `;
       card.onclick = null;
       card.style.cursor = 'default';
       card.classList.add('habit-card-filled', 'vicio-card-filled');
-      
-      // Listeners
-      card.querySelector('.ceder-btn').addEventListener('click', (e) => {
-          e.stopPropagation();
-          onCeder(vicio._id);
+
+      // Listeners usando a função segura e verificando callbacks (MANTIDO)
+      safeAddListener(card, '.ceder-btn', (e) => {
+        e.stopPropagation();
+        if (typeof onCeder === 'function') onCeder(vicio._id);
       });
-      card.querySelector('.controlado-btn').addEventListener('click', (e) => {
-          e.stopPropagation();
-          onControlar(vicio._id);
+
+      safeAddListener(card, '.controlado-btn', (e) => {
+        e.stopPropagation();
+        if (typeof onControlar === 'function') onControlar(vicio._id);
       });
-      card.querySelector('.edit-btn').addEventListener('click', (e) => {
-          e.stopPropagation();
-          onEdit(vicio, 'vicio');
+
+      safeAddListener(card, '.edit-btn', (e) => {
+        e.stopPropagation();
+        if (typeof onEdit === 'function') onEdit(vicio, 'vicio');
       });
-      card.querySelector('.delete-btn').addEventListener('click', (e) => {
-          e.stopPropagation();
-          onDelete(vicio._id, 'vicio');
+
+      safeAddListener(card, '.delete-btn', (e) => {
+        e.stopPropagation();
+        if (typeof onDelete === 'function') onDelete(vicio._id, 'vicio');
       });
     }
   });
@@ -118,99 +142,142 @@ export function renderVicios(vicios, onCeder, onControlar, onEdit, onDelete) {
 // --- Funções de UI (Modals, Tabs, etc) ---
 
 export function setupTabs(onTabChange) {
-  document.getElementById('tabHabitos').addEventListener('click', () => onTabChange('habitos'));
-  document.getElementById('tabVicios').addEventListener('click', () => onTabChange('vicios'));
+  // Verificação de callbacks
+  const handler = typeof onTabChange === 'function' ? onTabChange : (tab) => console.warn(`onTabChange não é uma função: ${tab}`);
+
+  // Adiciona listeners de forma segura
+  safeAddListener(document, '#tabHabitos', () => handler('habitos'));
+  safeAddListener(document, '#tabVicios', () => handler('vicios'));
 }
 
 export function updateActiveTab(tab) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-  
+
   if (tab === 'habitos') {
-    document.getElementById('tabHabitos').classList.add('active');
-    document.getElementById('contentHabitos').classList.add('active');
+    const tabHabitos = document.getElementById('tabHabitos');
+    const contentHabitos = document.getElementById('contentHabitos');
+    if (tabHabitos) tabHabitos.classList.add('active');
+    if (contentHabitos) contentHabitos.classList.add('active');
   } else {
-    document.getElementById('tabVicios').classList.add('active');
-    document.getElementById('contentVicios').classList.add('active');
+    const tabVicios = document.getElementById('tabVicios');
+    const contentVicios = document.getElementById('contentVicios');
+    if (tabVicios) tabVicios.classList.add('active');
+    if (contentVicios) contentVicios.classList.add('active');
   }
 }
 
 export function openHabitModal(tipo, item) {
   const modalTitle = document.getElementById('modalHabitTitle');
   const saveBtn = document.getElementById('saveHabit');
-  
+
   if (item) { // Editando
-    setEditandoId(item._id);
-    modalTitle.textContent = tipo === 'vicio' ? 'Editar Vício' : 'Editar Hábito';
-    document.getElementById('habitName').value = item.nome_habito;
-    document.getElementById('habitDescription').value = item.descricao || '';
-    saveBtn.textContent = 'Atualizar';
+    // Verifica e chama setEditandoId (de ./config.js)
+    if (typeof setEditandoId === 'function') setEditandoId(item._id);
+
+    if (modalTitle) modalTitle.textContent = tipo === 'vicio' ? 'Editar Vício' : 'Editar Hábito';
+    const habitName = document.getElementById('habitName');
+    const habitDescription = document.getElementById('habitDescription');
+
+    if (habitName) habitName.value = item.nome_habito || '';
+    if (habitDescription) habitDescription.value = item.descricao || '';
+
+    if (saveBtn) saveBtn.textContent = 'Atualizar';
   } else { // Criando
-    setEditandoId(null);
-    modalTitle.textContent = tipo === 'vicio' ? 'Adicionar Novo Vício' : 'Adicionar Novo Hábito';
-    document.getElementById('habitName').value = '';
-    document.getElementById('habitDescription').value = '';
-    saveBtn.textContent = 'Salvar';
+    if (typeof setEditandoId === 'function') setEditandoId(null);
+
+    if (modalTitle) modalTitle.textContent = tipo === 'vicio' ? 'Adicionar Novo Vício' : 'Adicionar Novo Hábito';
+
+    const habitName = document.getElementById('habitName');
+    const habitDescription = document.getElementById('habitDescription');
+
+    if (habitName) habitName.value = '';
+    if (habitDescription) habitDescription.value = '';
+
+    if (saveBtn) saveBtn.textContent = 'Salvar';
   }
-  
-  document.getElementById('habitType').value = tipo;
-  document.getElementById('addHabitModal').classList.add('active');
+
+  const habitType = document.getElementById('habitType');
+  if (habitType) habitType.value = tipo;
+
+  const modal = document.getElementById('addHabitModal');
+  if (modal) modal.classList.add('active');
 }
 
 export function closeHabitModal() {
-  document.getElementById('addHabitModal').classList.remove('active');
-  setEditandoId(null);
+  const modal = document.getElementById('addHabitModal');
+  if (modal) modal.classList.remove('active');
+  // Garante que o ID de edição seja limpo mesmo se o modal não existir
+  if (typeof setEditandoId === 'function') setEditandoId(null);
 }
 
 export function getHabitFormData() {
-  return {
-    nomeHabito: document.getElementById('habitName').value,
-    descricao: document.getElementById('habitDescription').value,
-    tipo: document.getElementById('habitType').value
-  };
+  // Usa verificações para garantir que os elementos existam
+  const nomeHabito = document.getElementById('habitName')?.value || '';
+  const descricao = document.getElementById('habitDescription')?.value || '';
+  const tipo = document.getElementById('habitType')?.value || '';
+
+  return { nomeHabito, descricao, tipo };
 }
 
 export function setupProfileMenu(username, onLogout, onSettings) {
   const profileMenu = document.getElementById('profileMenu');
   const dropdownMenu = document.getElementById('dropdownMenu');
-  
-  document.getElementById('username').textContent = username || 'Usuário';
 
-  profileMenu.addEventListener('click', (e) => {
-    e.stopPropagation();
-    dropdownMenu.classList.toggle('active');
-  });
+  const usernameElement = document.getElementById('username');
+  if (usernameElement) usernameElement.textContent = username || 'Usuário';
+
+  if (profileMenu && dropdownMenu) {
+    profileMenu.addEventListener('click', (e) => {
+      e.stopPropagation();
+      dropdownMenu.classList.toggle('active');
+    });
+  }
 
   window.addEventListener('click', (e) => {
-    if (!profileMenu.contains(e.target)) dropdownMenu.classList.remove('active');
+    if (profileMenu && dropdownMenu && !profileMenu.contains(e.target)) {
+      dropdownMenu.classList.remove('active');
+    }
   });
 
-  document.getElementById('logout').addEventListener('click', onLogout);
-  document.getElementById('settings').addEventListener('click', () => {
-    dropdownMenu.classList.remove('active');
-    onSettings();
+  // Adiciona listeners de forma segura e verifica callbacks
+  safeAddListener(document, '#logout', typeof onLogout === 'function' ? onLogout : () => { });
+
+  safeAddListener(document, '#settings', () => {
+    if (dropdownMenu) dropdownMenu.classList.remove('active');
+    if (typeof onSettings === 'function') onSettings();
   });
 }
 
 export function openSettingsModal(username) {
-  document.getElementById('userName').value = username || 'Usuário';
-  document.getElementById('settingsModal').classList.add('active');
+  const userNameInput = document.getElementById('userName');
+  if (userNameInput) userNameInput.value = username || 'Usuário';
+
+  const modal = document.getElementById('settingsModal');
+  if (modal) modal.classList.add('active');
 }
 
 export function closeSettingsModal() {
-  document.getElementById('settingsModal').classList.remove('active');
+  const modal = document.getElementById('settingsModal');
+  if (modal) modal.classList.remove('active');
 }
 
 export function setupModalListeners(onSave, onChangePassword, onDeleteAccount) {
+
+  // Funções de verificação e chamada para os callbacks
+  const safeSave = typeof onSave === 'function' ? onSave : () => console.error('onSave não é uma função.');
+  const safeChangePassword = typeof onChangePassword === 'function' ? onChangePassword : () => console.error('onChangePassword não é uma função.');
+  const safeDeleteAccount = typeof onDeleteAccount === 'function' ? onDeleteAccount : () => console.error('onDeleteAccount não é uma função.');
+
   // Modal de Hábito
-  document.getElementById('closeAddHabitModal').addEventListener('click', closeHabitModal);
-  document.getElementById('cancelAddHabit').addEventListener('click', closeHabitModal);
-  document.getElementById('saveHabit').addEventListener('click', onSave);
-  
+  safeAddListener(document, '#closeAddHabitModal', closeHabitModal);
+  safeAddListener(document, '#cancelAddHabit', closeHabitModal);
+  safeAddListener(document, '#saveHabit', safeSave);
+
   // Modal de Configurações
-  document.getElementById('closeSettingsModal').addEventListener('click', closeSettingsModal);
-  document.getElementById('changePassword').addEventListener('click', onChangePassword);
-  document.getElementById('deleteAccount').addEventListener('click', onDeleteAccount);
+  safeAddListener(document, '#closeSettingsModal', closeSettingsModal);
+  safeAddListener(document, '#changePassword', safeChangePassword);
+  safeAddListener(document, '#deleteAccount', safeDeleteAccount);
 
   // Fechar ao clicar fora
   window.addEventListener('click', (e) => {
