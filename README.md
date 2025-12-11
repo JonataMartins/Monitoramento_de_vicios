@@ -12,6 +12,10 @@ Este é um projeto desenvolvido com **Node.js**, utilizando **Express**, **Mongo
 - **Mongoose**: ODM para interagir com MongoDB de forma mais fácil.
 - **Swagger**: Ferramenta para gerar e visualizar a documentação da API.
 - **Ngrok**: Serviço para expor localmente servidores para a internet, útil para testes.
+- **JWT (JSON Web Token)**: Sistema de autenticação baseado em tokens para garantir a segurança das rotas protegidas da API, validando a identidade do usuário e suas permissões.
+- **Mocha**: Framework de testes para garantir a qualidade e funcionalidade da API, com suporte a testes unitários e de integração.
+- **Dotenv**: Biblioteca para carregar variáveis de ambiente a partir de um arquivo .env, garantindo a segurança e flexibilidade no gerenciamento de credenciais e configurações.
+- **CORS**: Middleware para permitir que a API seja acessada por diferentes origens (cross-origin), facilitando o uso da API por aplicativos frontend em diferentes domínios.
 
 ## Instalação do Projeto
 
