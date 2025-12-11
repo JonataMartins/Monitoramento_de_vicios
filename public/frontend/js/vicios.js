@@ -532,3 +532,190 @@ function setupModais() {
 }
 
 window.onload = carregarAPIConfig;
+
+// **Rota para Listar Vícios**
+/**
+ * @swagger
+ * /habito:
+ *   post:
+ *     summary: Lista os vícios monitorados
+ *     description: Retorna uma lista dos vícios monitorados pelo usuário
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               nome_usuario:
+ *                 type: string
+ *                 description: Nome do usuário
+ *                 example: "joao123"
+ *     responses:
+ *       200:
+ *         description: Lista de vícios
+ *       400:
+ *         description: Erro na solicitação
+ *       500:
+ *         description: Erro interno do servidor
+ */
+
+// **Rota para Criar Vício**
+/**
+ * @swagger
+ * /habito/create:
+ *   post:
+ *     summary: Cria um novo vício para monitoramento
+ *     description: Cria um vício com informações como nome, descrição, nível e frequência
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               nome_habito:
+ *                 type: string
+ *                 description: Nome do vício
+ *                 example: "Cigarro"
+ *               descricao:
+ *                 type: string
+ *                 description: Descrição do vício com nível e frequência
+ *                 example: "Fumar | Nível: alto | Frequência: diário"
+ *     responses:
+ *       201:
+ *         description: Vício criado com sucesso
+ *       400:
+ *         description: Dados inválidos
+ *       500:
+ *         description: Erro interno do servidor
+ */
+
+// **Rota para Atualizar Vício**
+/**
+ * @swagger
+ * /habito/{vicioId}:
+ *   put:
+ *     summary: Atualiza um vício monitorado
+ *     description: Atualiza as informações de um vício, como nome, descrição, nível e frequência
+ *     parameters:
+ *       - in: path
+ *         name: vicioId
+ *         required: true
+ *         description: ID do vício a ser atualizado
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               nome_habito:
+ *                 type: string
+ *                 description: Nome do vício
+ *                 example: "Cigarro"
+ *               descricao:
+ *                 type: string
+ *                 description: Descrição do vício com nível e frequência
+ *                 example: "Fumar | Nível: alto | Frequência: diário"
+ *     responses:
+ *       200:
+ *         description: Vício atualizado com sucesso
+ *       400:
+ *         description: Dados inválidos ou vício não encontrado
+ *       500:
+ *         description: Erro interno do servidor
+ */
+
+// **Rota para Deletar Vício**
+/**
+ * @swagger
+ * /habito/delete:
+ *   delete:
+ *     summary: Exclui um vício monitorado
+ *     description: Exclui o vício baseado no ID fornecido
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               habito_id:
+ *                 type: string
+ *                 description: ID do vício a ser deletado
+ *                 example: "60c72b2f9b1d8e4e8f57f738"
+ *     responses:
+ *       200:
+ *         description: Vício excluído com sucesso
+ *       404:
+ *         description: Vício não encontrado
+ *       500:
+ *         description: Erro interno do servidor
+ */
+
+// **Rota para Métricas de Vício**
+/**
+ * @swagger
+ * /habito/{vicioId}/metricas:
+ *   get:
+ *     summary: Obtém as métricas de um vício
+ *     description: Retorna informações detalhadas sobre o progresso do vício, como redução, frequência, recaídas, etc.
+ *     parameters:
+ *       - in: path
+ *         name: vicioId
+ *         required: true
+ *         description: ID do vício
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Métricas do vício
+ *       404:
+ *         description: Vício não encontrado
+ *       500:
+ *         description: Erro interno do servidor
+ */
+
+// **Rota para Registrar Evento de Recaída ou Resistência**
+/**
+ * @swagger
+ * /habito/{vicioId}/{tipo}:
+ *   put:
+ *     summary: Registra uma recaída ou resistência
+ *     description: Registra um evento de recaída ou resistência para um vício, atualizando as métricas
+ *     parameters:
+ *       - in: path
+ *         name: vicioId
+ *         required: true
+ *         description: ID do vício
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: tipo
+ *         required: true
+ *         description: Tipo de evento (recaida ou resistencia)
+ *         schema:
+ *           type: string
+ *           enum: [recaida, resistencia]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               nome_usuario:
+ *                 type: string
+ *                 description: Nome do usuário
+ *                 example: "joao123"
+ *     responses:
+ *       200:
+ *         description: Evento registrado com sucesso
+ *       400:
+ *         description: Tipo de evento inválido ou vício não encontrado
+ *       500:
+ *         description: Erro interno do servidor
+ */
