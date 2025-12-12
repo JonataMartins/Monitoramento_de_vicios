@@ -180,6 +180,36 @@ router.delete('/delete', verificarToken, async (req, res) => {
   }
 });
 
+router.put('/trocarNome', verificarToken, async (req, res) => {
+  const { nome_usuario_novo } = req.body;
+  const usuario = req.usuario;
+  try {
+    // Verifica se o novo nome já existe
+    const usuarioExistente = await Usuario.findOne({ nome_usuario: nome_usuario_novo });
+    if (usuarioExistente && usuarioExistente._id.toString() !== usuario._id.toString()) {
+      return res.status(400).json({ message: 'Nome de usuário já está em uso.' });
+    }
+    // Atualiza o nome
+    usuario.nome_usuario = nome_usuario_novo;
+    await usuario.save();
+    // Gera um novo token com o nome atualizado
+    const novoToken = jwt.sign(
+      { userId: usuario._id, nome_usuario: usuario.nome_usuario },
+      process.env.JWT_SECRET,
+      { expiresIn: '1d' }
+    );
+    usuario.ultimo_token = novoToken;
+    await usuario.save();
+    res.status(200).json({
+      message: 'Nome de usuário alterado com sucesso!',
+      token: novoToken 
+    });
+  } catch (err) {
+    console.error("Erro ao trocar nome de usuário:", err);
+    res.status(500).json({ message: 'Erro ao trocar nome de usuário!' });
+  }
+});
+
 module.exports = router;
 
 // **Rota para Criar Usuário**
@@ -307,6 +337,73 @@ module.exports = router;
  *         description: Usuário excluído com sucesso
  *       404:
  *         description: Usuário não encontrado
+ *       500:
+ *         description: Erro interno do servidor
+ */
+
+// **Rota de Logout**
+/**
+ * @swagger
+ * /usuario/logout:
+ *   post:
+ *     summary: Realiza o logout do usuário
+ *     description: Invalida o token atual do usuário no servidor, encerrando a sessão.
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Logout bem-sucedido. O token foi invalidado no servidor.
+ *       401:
+ *         description: Token inválido, expirado ou não autorizado.
+ *       500:
+ *         description: Erro interno do servidor
+ */
+
+// **Rota para Verificar Token**
+/**
+ * @swagger
+ * /usuario/verificar:
+ *   get:
+ *     summary: Verifica se o token é válido
+ *     description: Retorna os dados do usuário caso o token fornecido seja válido.
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Token válido
+ *       401:
+ *         description: Token inválido ou expirado
+ *       500:
+ *         description: Erro interno do servidor
+ */
+
+// **Rota para Trocar Nome de Usuário**
+/**
+ * @swagger
+ * /usuario/trocarNome:
+ *   put:
+ *     summary: Altera o nome de usuário
+ *     description: Permite alterar o nome de usuário, validando e atualizando o token.
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               novo_nome_usuario:
+ *                 type: string
+ *                 description: Novo nome de usuário
+ *                 example: "joao_renomeado"
+ *     responses:
+ *       200:
+ *         description: Nome alterado com sucesso
+ *       400:
+ *         description: Nome já está em uso
+ *       401:
+ *         description: Token inválido ou expirado
  *       500:
  *         description: Erro interno do servidor
  */

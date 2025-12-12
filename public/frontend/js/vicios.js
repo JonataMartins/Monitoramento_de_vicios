@@ -16,27 +16,6 @@ const setTxt = (id, txt) => document.getElementById(id).textContent = txt;
 
 // --- CONFIGURAÇÃO E AUTENTICAÇÃO ---
 
-// Função auxiliar para injetar CSS uma única vez
-function injectCustomStyles() {
-  if (document.getElementById('custom-vicios-styles')) {
-    return; // Já foi injetado
-  }
-  const style = document.createElement('style');
-  style.id = 'custom-vicios-styles'; // ID para identificação
-  style.textContent = `
-    .vicio-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; color: white; font-size: 12px; font-weight: bold; margin: 5px 0; text-transform: capitalize; }
-    .vicio-info { margin: 5px 0; font-size: 12px; color: #64748b; }
-    .metrics-container { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
-    .metric-card { background: #f8f9fa; padding: 15px; border-radius: 8px; text-align: center; }
-    .metric-card h3 { margin: 0 0 10px 0; font-size: 14px; color: #64748b; }
-    .metric-value { font-size: 24px; font-weight: bold; color: #334155; }
-    .progress-bar { width: 100%; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; margin: 10px 0; }
-    .progress-fill { height: 100%; background: #4CAF50; transition: width 0.3s ease; }
-    .metrics-actions { display: flex; gap: 10px; justify-content: center; }
-  `;
-  document.head.appendChild(style);
-}
-
 async function carregarAPIConfig() {
   try {
     const configResponse = await fetch('/api/config');
@@ -47,11 +26,10 @@ async function carregarAPIConfig() {
     console.error('Erro ao carregar configuração:', erro);
     API_URL = 'http://localhost:3000';
   }
-  
-  injectCustomStyles();
-
+  // Inicia a aplicação independente do sucesso da config
   await carregarVicios();
   setupPerfil();
+  setupCardsVicios();
   setupModais();
 }
 
@@ -70,37 +48,21 @@ async function fazerRequisicaoAutenticada(endpoint, options = {}) {
 
   let body = options.body;
 
-  // Tratamento legado para quando não há token (mantido por compatibilidade)
+  // Tratamento legado para quando não há token (adiciona nome_usuario no body)
   if (!token && nomeUsuario && body) {
     const bodyObj = typeof body === 'string' ? JSON.parse(body) : body;
     bodyObj.nome_usuario = nomeUsuario;
     body = JSON.stringify(bodyObj);
   }
 
+  // Se endpoint for URL completa, usa ela, senão concatena API_URL
   const url = endpoint.startsWith('http') ? endpoint : API_URL + endpoint;
 
   const response = await fetch(url, { ...options, headers, body });
 
   if (!response.ok) {
     const errorText = await response.text();
-    let errorMessage = `Erro ${response.status}: ${errorText}`;
-
-    try {
-      const errorJson = JSON.parse(errorText);
-
-      if (errorJson.message || errorJson.error || errorJson.details) {
-        errorMessage = errorJson.message || errorJson.error || errorJson.details;
-      } else if (typeof errorJson === 'object' && errorJson !== null) {
-
-        const specificError = Object.values(errorJson).find(val => val);
-        if (specificError) errorMessage = specificError;
-      }
-    } catch (e) {
-
-      console.error(e);
-    }
-
-    throw new Error(errorMessage);
+    throw new Error(`Erro ${response.status}: ${errorText}`);
   }
 
   return response.json();
@@ -124,6 +86,7 @@ async function checarLogin() {
       localStorage.removeItem('authToken');
       localStorage.removeItem('user_id');
 
+      // Se tiver nome_usuario, permite continuar (modo legado/sem auth estrita), senão login
       if (!nomeUsuario) {
         localStorage.clear();
         window.location.href = 'login.html';
@@ -148,18 +111,7 @@ async function carregarVicios() {
     preencherCardsVicios(vicios);
   } catch (erro) {
     console.error('Erro ao carregar vícios:', erro);
-    alert(`Não foi possível carregar os vícios: ${erro.message}`);
     exibirEstadoVazio();
-  }
-}
-
-
-function safeAddListener(card, selector, handler) {
-  const element = card.querySelector(selector);
-  if (element) {
-    element.addEventListener('click', handler);
-  } else {
-    console.warn(`Elemento com seletor '${selector}' não encontrado no card.`);
   }
 }
 
@@ -180,13 +132,14 @@ function preencherCardsVicios(vicios) {
   emptyState.style.display = 'none';
 
   cards.forEach((card, index) => {
-    const vicio = vicios[index];
-    card.className = 'add-habit-card';
+    card.className = 'add-habit-card'; // Remove classes extras
     card.style.cursor = 'pointer';
     card.onclick = () => abrirModalVicioParaCard(index);
     card.innerHTML = `<i>🚬</i><span>Adicione seu vício</span>`;
 
+    // Preencher se houver vício neste índice
     if (index < vicios.length) {
+      const vicio = vicios[index];
       const info = extrairInfoVicio(vicio.descricao);
 
       card.classList.add('habit-card-filled');
@@ -194,27 +147,22 @@ function preencherCardsVicios(vicios) {
       card.onclick = null;
 
       card.innerHTML = `
-        <div class="habit-card-content">
-          <h3>${vicio.nome_habito}</h3>
-          <div class="vicio-badge" style="background: ${getNivelCor(info.nivel)}">
-            ${info.nivel}
-          </div>
-          <div class="vicio-info">
-            <small>Frequência: ${info.frequencia}</small>
-          </div>
-          ${info.descricaoOriginal ? `<p>${info.descricaoOriginal}</p>` : ''}
-          <div class="habit-card-actions">
-            <button class="icon-btn small-btn metrics-btn" title="Ver Métricas">📊</button>
-            <button class="icon-btn small-btn edit-btn" title="Editar">✏️</button>
-           <button class="icon-btn small-btn delete-btn" title="Excluir">🗑️</button>
-          </div>
-        </div>
-      `;
-
-      // --- ATRIBUIÇÃO DOS EVENT LISTENERS SEGURA ---
-      safeAddListener(card, '.metrics-btn', (e) => verMetricasVicio(vicio._id, e));
-      safeAddListener(card, '.edit-btn', (e) => editarVicioCard(vicio._id, e));
-      safeAddListener(card, '.delete-btn', (e) => deletarVicioCard(vicio._id, e));
+        <div class="habit-card-content">
+          <h3>${vicio.nome_habito}</h3>
+          <div class="vicio-badge" style="background: ${getNivelCor(info.nivel)}">
+            ${info.nivel}
+          </div>
+          <div class="vicio-info">
+            <small>Frequência: ${info.frequencia}</small>
+          </div>
+          ${info.descricaoOriginal ? `<p>${info.descricaoOriginal}</p>` : ''}
+          <div class="habit-card-actions">
+            <button class="icon-btn small-btn" title="Ver Métricas" onclick="verMetricasVicio('${vicio._id}', event)">📊</button>
+            <button class="icon-btn small-btn" title="Editar" onclick="editarVicioCard('${vicio._id}', event)">✏️</button>
+            <button class="icon-btn small-btn" title="Excluir" onclick="deletarVicioCard('${vicio._id}', event)">🗑️</button>
+          </div>
+        </div>
+      `;
     }
   });
 }
@@ -285,7 +233,7 @@ async function editarVicioCard(vicioId, event) {
     }
   } catch (erro) {
     console.error(erro);
-    alert('Erro ao carregar dados para edição: ' + erro.message);
+    alert('Erro ao carregar dados para edição');
   }
 }
 
@@ -344,14 +292,13 @@ async function verMetricasVicio(vicioId, event) {
   } catch (erro) {
     console.error('❌ Erro API Métricas:', erro);
 
-    // Fallback para dados simulados em caso de falha na API de métricas
     atualizarModalMetricas({
       progresso_reducao: 25,
       dias_sem_recair: 3,
       frequencia_media: 'Semanal',
       total_recaidas: 2
     }, vicioId);
-    alert('Métricas simuladas (Erro de conexão ou dados insuficientes: ' + erro.message + ').');
+    alert('Métricas simuladas (Erro de conexão ou dados insuficientes).');
   }
 }
 
@@ -389,7 +336,6 @@ async function registrarEventoMetrica(tipo) {
     });
     alert(msgSucesso);
     fecharModalMetricas();
-    carregarVicios();
   } catch (erro) {
     console.error(`Erro ao registrar ${tipo}:`, erro);
     alert(`Erro: ${erro.message}`);
@@ -403,37 +349,170 @@ async function trocarSenha() {
   const senhaNova = prompt('Digite sua nova senha:');
   if (!senhaAntiga || !senhaNova) return;
 
+  // Logs de depuração
+  const token = localStorage.getItem('jwt_token');  // Usa 'jwt_token' diretamente
+  const nomeUsuario = localStorage.getItem('nome_usuario');
+  console.log('🔍 Depuração trocarSenha - Token:', token ? 'Presente' : 'Ausente');
+  console.log('🔍 Depuração trocarSenha - Nome Usuário:', nomeUsuario);
+
+  // Verifica se há token básico
+  if (!token) {
+    alert('Token não encontrado. Você precisa estar logado com autenticação completa. Redirecionando para o login.');
+    window.location.href = 'login.html';
+    return;
+  }
+
+  const payload = {
+    senha_antiga: senhaAntiga,
+    senha_nova: senhaNova
+  };
+
   try {
-    // fazerRequisicaoAutenticada cuida do token ou do nome_usuario no body automaticamente
-    await fazerRequisicaoAutenticada('/usuario/trocarSenha', {
+    // Faz a requisição MANUALMENTE para evitar usar 'authToken' e quebrar o código
+    const url = API_URL + '/usuario/trocarSenha';  // Usa API_URL global
+    const response = await fetch(url, {
       method: 'PUT',
-      body: JSON.stringify({ senha_antiga: senhaAntiga, senha_nova: senhaNova })
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`  // Envia o token correto
+      },
+      body: JSON.stringify(payload)
     });
-    alert('Senha alterada com sucesso!');
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Erro ${response.status}: ${errorText}`);
+    }
+
+    const result = await response.json();
+    alert(result.message + ' Você será deslogado para aplicar as mudanças. Faça login novamente com a nova senha.');
+
+    // Desloga a conta: limpa o localStorage e redireciona para login
+    await logout();
   } catch (erro) {
-    alert('Erro ao trocar senha: ' + erro.message);
+    console.error('Erro ao trocar senha:', erro);
+    if (erro.message.includes('401') || erro.message.includes('Token')) {
+      alert('Erro de autenticação: Token inválido. Faça login novamente.');
+      localStorage.clear();
+      window.location.href = 'login.html';
+    } else {
+      alert('Erro ao trocar senha: ' + erro.message + '. Tente novamente.');
+    }
   }
 }
 
-async function deletarConta() {
-  if (!confirm('Tem certeza? Ação irreversível.')) return;
-  try {
-    await fazerRequisicaoAutenticada('/usuario/delete', {
-      method: 'DELETE',
-      body: JSON.stringify({ nome_usuario: localStorage.getItem('nome_usuario') })
-    });
-    localStorage.clear();
-    alert('Conta deletada.');
+async function trocarNomeUsuario() {
+  const nomeNovo = getVal('userName').trim();  // Pega o valor do campo userName
+  if (!nomeNovo) return alert('Por favor, insira um nome válido.');
+
+  // Logs de depuração
+  const token = localStorage.getItem('jwt_token');
+  console.log('🔍 Depuração trocarNomeUsuario - Token:', token ? 'Presente' : 'Ausente');
+
+  // Verifica se há token básico
+  if (!token) {
+    alert('Token não encontrado. Você precisa estar logado com autenticação completa. Redirecionando para o login.');
     window.location.href = 'login.html';
+    return;
+  }
+
+  const payload = {
+    nome_usuario_novo: nomeNovo
+  };
+
+  try {
+    const url = API_URL + '/usuario/trocarNome';
+    const response = await fetch(url, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}` 
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Erro ${response.status}: ${errorText}`);
+    }
+
+    const result = await response.json();
+    alert(result.message + ' Você será deslogado para aplicar as mudanças. Faça login novamente.');
+
+    // Atualiza o localStorage com o NOVO token e nome
+    if (result.token) {
+      localStorage.setItem('jwt_token', result.token);
+      localStorage.setItem('nome_usuario', nomeNovo);
+      setTxt('username', nomeNovo); 
+    }
+
+    // Usa a função logout() para encerrar a sessão corretamente
+    await logout();
   } catch (erro) {
-    alert('Erro ao deletar conta: ' + erro.message);
+    console.error('Erro ao trocar nome de usuário:', erro);
+    if (erro.message.includes('401') || erro.message.includes('Token')) {
+      alert('Erro de autenticação: Token inválido. Faça login novamente.');
+      localStorage.clear();
+      window.location.href = 'login.html';
+    } else {
+      alert('Erro ao trocar nome: ' + erro.message + '. Tente novamente.');
+    }
   }
 }
+
+
+async function deletarConta() {
+  if (!confirm('Tem certeza? Ação irreversível.')) return;
+
+  // Logs de depuração
+  const token = localStorage.getItem('jwt_token');  // Usa 'jwt_token' diretamente
+  console.log('🔍 Depuração deletarConta - Token:', token ? 'Presente' : 'Ausente');
+
+  // Verifica se há token básico
+  if (!token) {
+    alert('Token não encontrado. Você precisa estar logado com autenticação completa. Redirecionando para o login.');
+    window.location.href = 'login.html';
+    return;
+  }
+
+  try {
+    // Faz a requisição MANUALMENTE para usar 'jwt_token' diretamente
+    const url = API_URL + '/usuario/delete';  // Usa API_URL global
+    const response = await fetch(url, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`  // Envia o token correto
+      },
+      body: JSON.stringify({})
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Erro ${response.status}: ${errorText}`);
+    }
+
+    const result = await response.json();
+    alert(result.message);  // "Usuário excluído com sucesso!"
+
+    await logout();
+  } catch (erro) {
+    console.error('Erro ao deletar conta:', erro);
+    if (erro.message.includes('401') || erro.message.includes('Token')) {
+      alert('Erro de autenticação: Token inválido. Faça login novamente.');
+      localStorage.clear();
+      window.location.href = 'login.html';
+    } else {
+      alert('Erro ao deletar conta: ' + erro.message + '. Tente novamente.');
+    }
+  }
+}
+
 
 async function logout() {
   try {
     await fazerRequisicaoAutenticada('/usuario/logout', { method: 'POST' });
-  } catch (e) { /* Ignora erro no logout */ }
+  } catch (e) { }
   localStorage.clear();
   window.location.href = 'login.html';
 }
@@ -503,10 +582,17 @@ function setupPerfil() {
   });
 
   document.getElementById('logout').addEventListener('click', logout);
-  document.getElementById('settings').addEventListener('click', () => {
+    document.getElementById('settings').addEventListener('click', () => {
     dropdownMenu.classList.remove('active');
-    setVal('userName', localStorage.getItem('nome_usuario') || 'Usuário');
+    setVal('userName', localStorage.getItem('nome_usuario') || 'Usuário'); 
     document.getElementById('settingsModal').classList.add('active');
+  });
+}
+
+
+function setupCardsVicios() {
+  document.querySelectorAll('.add-habit-card').forEach((card, index) => {
+    card.addEventListener('click', () => abrirModalVicioParaCard(index));
   });
 }
 
@@ -518,20 +604,40 @@ function setupModais() {
     if (e.target.id === 'metricsModal') fecharModalMetricas();
   });
 
+  // Botões de fechar
   document.getElementById('closeAddHabitModal').onclick = fecharModalVicio;
   document.getElementById('cancelAddHabit').onclick = fecharModalVicio;
   document.getElementById('closeSettingsModal').onclick = () => document.getElementById('settingsModal').classList.remove('active');
   document.getElementById('closeMetricsModal').onclick = fecharModalMetricas;
 
+  // Ações Principais
   document.getElementById('saveHabit').onclick = processarSalvamentoVicio;
   document.getElementById('changePassword').onclick = trocarSenha;
   document.getElementById('deleteAccount').onclick = deletarConta;
+  document.getElementById('editName').addEventListener('click', trocarNomeUsuario);
 
+  // Ações de Métricas (Usando função unificada)
   document.getElementById('logRelapse').onclick = () => registrarEventoMetrica('recaida');
   document.getElementById('logResistance').onclick = () => registrarEventoMetrica('resistencia');
 }
 
+// Estilos CSS injetados
+const style = document.createElement('style');
+style.textContent = `
+  .vicio-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; color: white; font-size: 12px; font-weight: bold; margin: 5px 0; text-transform: capitalize; }
+  .vicio-info { margin: 5px 0; font-size: 12px; color: #64748b; }
+  .metrics-container { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+  .metric-card { background: #f8f9fa; padding: 15px; border-radius: 8px; text-align: center; }
+  .metric-card h3 { margin: 0 0 10px 0; font-size: 14px; color: #64748b; }
+  .metric-value { font-size: 24px; font-weight: bold; color: #334155; }
+  .progress-bar { width: 100%; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; margin: 10px 0; }
+  .progress-fill { height: 100%; background: #4CAF50; transition: width 0.3s ease; }
+  .metrics-actions { display: flex; gap: 10px; justify-content: center; }
+`;
+document.head.appendChild(style);
+
 window.onload = carregarAPIConfig;
+
 
 // **Rota para Listar Vícios**
 /**
@@ -716,6 +822,92 @@ window.onload = carregarAPIConfig;
  *         description: Evento registrado com sucesso
  *       400:
  *         description: Tipo de evento inválido ou vício não encontrado
+ *       500:
+ *         description: Erro interno do servidor
+ */
+
+// **Rota para Trocar Senha**
+/**
+ * @swagger
+ * /usuario/trocarSenha:
+ *   put:
+ *     summary: Altera a senha do usuário
+ *     description: Atualiza a senha do usuário após validação da senha antiga
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               senha_antiga:
+ *                 type: string
+ *                 description: Senha atual do usuário
+ *                 example: "senha123"
+ *               senha_nova:
+ *                 type: string
+ *                 description: Nova senha desejada
+ *                 example: "novaSenha123"
+ *     responses:
+ *       200:
+ *         description: Senha alterada com sucesso. Um novo token será gerado.
+ *       400:
+ *         description: Senha antiga incorreta
+ *       401:
+ *         description: Token inválido ou expirado
+ *       500:
+ *         description: Erro interno do servidor
+ */
+
+// **Rota para Trocar Nome de Usuário**
+/**
+ * @swagger
+ * /usuario/trocarNome:
+ *   put:
+ *     summary: Altera o nome de usuário
+ *     description: Atualiza o nome de usuário e gera um novo token refletindo as mudanças
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               nome_usuario_novo:
+ *                 type: string
+ *                 description: Novo nome de usuário desejado
+ *                 example: "joao456"
+ *     responses:
+ *       200:
+ *         description: Nome de usuário alterado com sucesso
+ *       400:
+ *         description: Nome de usuário já está em uso
+ *       401:
+ *         description: Token inválido ou expirado
+ *       500:
+ *         description: Erro interno do servidor
+ */
+
+// **Rota para Deletar Conta**
+/**
+ * @swagger
+ * /usuario/delete:
+ *   delete:
+ *     summary: Exclui a conta do usuário
+ *     description: Remove permanentemente a conta do usuário autenticado
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: false
+ *     responses:
+ *       200:
+ *         description: Usuário excluído com sucesso
+ *       401:
+ *         description: Token inválido ou expirado
  *       500:
  *         description: Erro interno do servidor
  */
