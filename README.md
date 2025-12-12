@@ -33,7 +33,7 @@ Este é um projeto desenvolvido com **Node.js**, utilizando **Express**, **Mongo
    Crie um arquivo `.env` na raiz do projeto e adicione as variáveis de ambiente necessárias:
    ```bash
    MONGO_URI=mongodb+srv://<usuario>:<senha>@cluster.mongodb.net/<nome-do-banco>
-   API_URL=http://localhost:3000
+   API_URL=http://localhost:3000 ou link ngrok caso o use
    PORT=3000
    JWT_SECRET=seu-segredo-jwt
 
