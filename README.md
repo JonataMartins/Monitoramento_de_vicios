@@ -4,6 +4,31 @@
 
 Este é um projeto desenvolvido com **Node.js**, utilizando **Express**, **MongoDB Atlas**, e documentação gerada com **Swagger**. O projeto oferece uma API para interação com o banco de dados MongoDB e está configurado para ser acessado por meio de um túnel gerado com **Ngrok** para facilitar o acesso durante o desenvolvimento local.
 
+## Arquitetura Utilizada
+
+- **Modelo Arquitetural Base**: Cliente-servidor (centralizao), (MANTIDO)
+- **Distribuição de Clientes e Servidores**: (NOVO) servidor via Ngrok e Node 
+
+**Tecnologia/Plataforma**: Node + mongo DB atlas
+
+## Escolha de Tecnologias
+
+- **Arquitetura / Middleware**: REST (mais simples, fácil de usar com JS).
+
+- **Processos e Virtualização**: Node
+
+- **Comunicação**: REST, cors, express (HTTP/JSON).
+
+- **Coordenação**: MongoDB
+
+- **Nomeação**: Ngrok random.
+
+- **Consistência e Replicação**: MongoDB
+
+- **Tolerância a Falhas**: Retry básico no código (ex: reexecutar queries em falha e exebição de erros).
+
+- **Segurança**: JWT (JSON Web Tokens) para autenticação de usuários e demais rotas.
+
 ## Tecnologias Usadas
 
 - **Node.js**: Plataforma para execução de JavaScript no backend.
